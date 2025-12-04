@@ -1,0 +1,152 @@
+const dummyData = 
+    {
+    "success": true,
+    "data": [
+        {
+            "id": "9b8d799c-6892-4b36-b1f7-fcfe6f9116c6",
+            "title": "Magnam et voluptatem",
+            "description": "<p>Expedita quas blandi.</p>",
+            "due_date": "2025-11-28",
+            "status": "Pending",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": [
+                {
+                    "first_name": "Admin",
+                    "last_name": "User",
+                    "id": 1
+                }
+            ]
+        },
+        {
+            "id": "712c3cb9-e436-4b06-b937-739de69706ab",
+            "title": "Earum quidem non dol",
+            "description": "<p>Nobis consectetur, v.</p>",
+            "due_date": null,
+            "status": "In-Progress",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "0eca03b5-e62c-4175-a8be-e730d6c955d2",
+            "title": "Voluptatem sint maio",
+            "description": "<p>Aliqua. Harum minim .</p>",
+            "due_date": null,
+            "status": "On-Approval",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "c74d5a03-9570-425f-b054-974c0815dcb7",
+            "title": "In odit officia laud",
+            "description": "<p>Dolor ex duis dolore.</p>",
+            "due_date": null,
+            "status": "In-Progress",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "4543f74b-c2eb-40c0-b3ea-d0b2af5d7552",
+            "title": "Tempor duis a illo a",
+            "description": "<p>Beatae amet, consequ.</p>",
+            "due_date": null,
+            "status": "In-Progress",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "09c32103-2987-4c3d-bb0b-30785649d2b2",
+            "title": "Veniam duis vitae v",
+            "description": "<p>Temporibus sed assum.</p>",
+            "due_date": null,
+            "status": "Pending",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "f8591a1c-f8e9-4675-b965-3a8fe37fe235",
+            "title": "Vel aliqua Et quos ",
+            "description": "<p>Suscipit fugit, prae.</p>",
+            "due_date": null,
+            "status": "Pending",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "d187bd97-980d-43cd-b5c6-0ad7a8d2a89a",
+            "title": "Accusantium et elige",
+            "description": "<p>Voluptatem culpa, si.</p>",
+            "due_date": null,
+            "status": "Pending",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "87d2c32d-d8c8-47b9-aa02-fd69e62e3b2e",
+            "title": "Qui veniam ipsum d",
+            "description": "<p>Id autem iure quidem.</p>",
+            "due_date": null,
+            "status": "Pending",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": []
+        },
+        {
+            "id": "5d72a65a-11aa-4328-9a3d-44f4006a59a9",
+            "title": "Placeat alias error",
+            "description": "<p>Sunt ducimus, proide.</p>",
+            "due_date": null,
+            "status": "Done",
+            "priority": "Low",
+            "creator_id": 1,
+            "project_id": null,
+            "project_name": null,
+            "assigned_employees": [
+                {
+                    "first_name": "Dante",
+                    "last_name": "Hayden",
+                    "id": 2
+                },
+                {
+                    "first_name": "Driscoll",
+                    "last_name": "Lamb",
+                    "id": 3
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "total_tasks": 17,
+        "total_pages": 2,
+        "current_page": 1,
+        "per_page": "10",
+        "has_more": true
+    },
+    "message": "Fetched tasks based on employee access level. (Page: 1)"
+}
+module.exports = dummyData;
