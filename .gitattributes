@@ -1,0 +1,2 @@
+client/dist/mac-arm64/electron-task-app.app/Contents/Frameworks/Electron[[:space:]]Framework.framework/Versions/A/Electron[[:space:]]Framework filter=lfs diff=lfs merge=lfs -text
+client/dist/mac-arm64/electron-task-app.app/Contents/Resources/app.asar filter=lfs diff=lfs merge=lfs -text
