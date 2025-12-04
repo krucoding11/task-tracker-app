@@ -1,70 +1,125 @@
 const db = require("../config/db");
 const moment = require("moment");
 const { format } = require("date-fns");
-// const {
-//   insertAttachmentsAndGetIds,
-//   deleteAttachmentsAndRecords,
-// } = require("../helpers/fileAttachment");
-// const {
-//   saveNewCommentFiles,
-//   deleteCommentFiles,
-// } = require("../middleware/attachmentUpload");
 
 exports.getTasksByEmployeeId = async (req, res) => {
   const employeeId = req.user.id;
+  const user = req.user;
 
+  const isAdmin = user.permissions.includes("tasks:manage");
+
+  const { status, page = 1, limit = 10 } = req.query;
+
+  const currentPage = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const offset = (currentPage - 1) * limitNumber;
+
+  if (isNaN(currentPage) || currentPage < 1) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid page number.",
+    });
+  }
   try {
-    const result = await db.raw(
-      `
-      WITH user_tasks AS (
-        -- Step 1: Find the DISTINCT task IDs (Primary Key) 
-        -- where the employee is either assigned OR the creator.
-        SELECT DISTINCT t.id AS task_id
-        FROM tasks AS t
-        LEFT JOIN task_assignees AS et ON et.task_id = t.id
-        WHERE et.employee_id = ? OR t.creator_id = ?
-      )
-      
-      -- Step 2: Select all task details for those unique IDs.
-      -- This allows the JSON aggregation to work without conflict.
-      SELECT
-        t.id, t.title, t.description, t.due_date, t.status, t.priority,
-        t.project_id, p.name AS project_name,
-        (
-          SELECT json_agg(json_build_object('first_name', e.first_name, 'last_name', e.last_name,'id',e.id))
-          FROM task_assignees et_agg
-          JOIN employees e ON e.id = et_agg.employee_id
-          WHERE et_agg.task_id = t.id
-        ) AS assigned_employees
-      FROM tasks AS t
-      JOIN user_tasks ut ON ut.task_id = t.id
-      LEFT JOIN projects AS p ON p.id = t.project_id
-      ORDER BY t.due_date ASC
-      `,
-      [employeeId, employeeId],
-    );
+    const whereParts = [];
+    const bindings = [];
 
-    const rawRows = result.rows || result;
+    if (status && status !== "all") {
+      whereParts.push("t.status = ?");
+      bindings.push(status);
+    }
 
-    const formattedTasks = rawRows.map((task) => ({
+    if (req.query.assigned_to) {
+      whereParts.push(`
+       t.id IN (
+         SELECT DISTINCT task_id FROM task_assignees WHERE employee_id = ?
+       )
+     `);
+      bindings.push(req.query.assigned_to);
+    }
+
+    if (!isAdmin) {
+      const authorizedCreatorIds = await getAuthorizedProjectCreatorIds(user);
+      if (
+        user.permissions.includes("tasks:manage:team") &&
+        authorizedCreatorIds?.length > 0
+      ) {
+        whereParts.push(`
+         (
+           t.creator_id IN (${authorizedCreatorIds.join(",")})
+           OR t.id IN (
+             SELECT DISTINCT task_id FROM task_assignees WHERE employee_id IN (${authorizedCreatorIds.join(
+               ",",
+             )})
+           )
+         )
+       `);
+      } else {
+        whereParts.push(`
+         (
+           t.creator_id = ?
+           OR t.id IN (SELECT DISTINCT task_id FROM task_assignees WHERE employee_id = ?)
+         )
+       `);
+        bindings.push(employeeId, employeeId);
+      }
+    }
+
+    const whereClause =
+      whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+    const countQuery = `
+     SELECT COUNT(DISTINCT t.id) AS total_count
+     FROM tasks t
+     LEFT JOIN projects p ON p.id = t.project_id
+     ${whereClause}
+   `;
+
+    const countResult = await db.raw(countQuery, bindings);
+    const totalTasks = parseInt(countResult.rows[0].total_count, 10);
+    const totalPages = Math.ceil(totalTasks / limitNumber);
+    const dataQuery = `
+     SELECT
+       t.id, t.title, t.description, t.due_date, t.status, t.priority,
+       t.creator_id, t.project_id, p.name AS project_name,
+       (
+         SELECT json_agg(json_build_object('first_name', e.first_name, 'last_name', e.last_name, 'profile_picture_url', e.profile_picture_url, 'id', e.id))
+         FROM task_assignees ta
+         JOIN employees e ON e.id = ta.employee_id
+         WHERE ta.task_id = t.id
+       ) AS assigned_employees
+     FROM tasks t
+     LEFT JOIN projects p ON p.id = t.project_id
+     ${whereClause}
+     ORDER BY t.due_date ASC
+     LIMIT ?
+     OFFSET ?
+   `;
+
+    const finalBindings = [...bindings, limitNumber, offset];
+    const result = await db.raw(dataQuery, finalBindings);
+
+    const formattedTasks = result.rows.map((task) => ({
       ...task,
-      due_date: task.due_date
-        ? moment(task.due_date).format("YYYY-MM-DD")
-        : null,
       assigned_employees: task.assigned_employees || [],
+      due_date: task.due_date
+        ? format(new Date(task.due_date), "yyyy-MM-dd")
+        : null,
     }));
 
     return res.status(200).json({
       success: true,
       data: formattedTasks,
-      message: "Fetched tasks assigned to or created by the employee.",
+      meta: {
+        total_tasks: totalTasks,
+        total_pages: totalPages,
+        current_page: currentPage,
+        per_page: limitNumber,
+        has_more: currentPage < totalPages,
+      },
     });
   } catch (error) {
-    console.error("Error fetching tasks by employee ID:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve employee tasks.",
-      error: error.message,
-    });
+    console.error("Error fetching tasks:", error);
+    const { message, statusCode } = parseDbError(error);
+    return res.status(statusCode).json({ error: message });
   }
 };
