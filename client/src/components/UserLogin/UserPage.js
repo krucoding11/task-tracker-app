@@ -1,12 +1,16 @@
 import React from "react";
 import { FaUserCircle } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import { FaAngleLeft } from "react-icons/fa6";
 function UserPage() {
   const navigate = useNavigate();
+  // const location = useLocation();
+
+  const loggedEmail = localStorage.getItem('currentEmail') || "user@example.com";
+
   const currentUser = {
     name: "Admin User",
-    email: "admin@example.com",
+    email: loggedEmail,
   };
 
   const goToTaskPage = () => {
@@ -22,9 +26,9 @@ function UserPage() {
         <div className="items-center space-x-4">
           <FaUserCircle className="mr-2" />
           <div>
-            <p className="text-lg font-semibold text-gray-900">
+            {/* <p className="text-lg font-semibold text-gray-900">
               {currentUser.name}
-            </p>
+            </p> */}
             <p className="text-sm text-gray-500">{currentUser.email}</p>
           </div>
         </div>

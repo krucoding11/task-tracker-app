@@ -16,10 +16,10 @@ export default function LoginPage() {
       setError("Please enter both email and password.");
       return;
     }
-    // TODO: Implement actual API call for login
-    console.log("Attempting login for:", email);
+
+    localStorage.setItem('currentEmail', email);
     setError(null);
-    navigate("/task");
+    navigate("/task", {state: {userEmail: email}});
   };
 
   const togglePassword = () => {
