@@ -1,25 +1,25 @@
 const express = require("express");
 const cors = require("cors");
-// const sequelize = require('./config/sequelize');
+const sequelize = require('./config/sequelize');
 
 const app = express();
 console.log("ENV Loaded and DB_NAME...............", process.env.DB_NAME);
 
-// sequelize
-//   .sync({ alter: true }, { force: true })
-//   .then(() => {
-//     console.log('All tables synced.');
-//   })
-//   .catch((err) => console.error('Sync failed:', err));
+sequelize
+  .sync({ alter: true }, { force: true })
+  .then(() => {
+    console.log('All tables synced.');
+  })
+  .catch((err) => console.error('Sync failed:', err));
 
-// sequelize
-//   .authenticate()
-//   .then(() => {
-//     console.log('Connection has been established successfully..!!');
-//   })
-//   .catch((err) => {
-//     console.error('error connecting to db............', err);
-//   });
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully..!!');
+  })
+  .catch((err) => {
+    console.error('error connecting to db............', err);
+  });
 
 app.use(express.json());
 app.use(
