@@ -1,6 +1,6 @@
 exports.up = function (knex) {
   return knex.schema
-    .alterTable("attendance", function (table) {
+    .alterTable("attendance", (table) => {
       table.dropUnique(["employee_id", "attendance_date"]);
 
       table.dropColumn("attendance_date");
@@ -8,7 +8,7 @@ exports.up = function (knex) {
       table.dropColumn("check_out_time");
     })
     .then(() => {
-      return knex.schema.alterTable("attendance", function (table) {
+      return knex.schema.alterTable("attendance", (table) => {
         table.timestamp("check_in_time", { useTz: true });
         table.timestamp("check_out_time", { useTz: true });
         table.string("log_method").defaultTo("Biometric").notNullable();
@@ -26,7 +26,7 @@ exports.up = function (knex) {
 
 exports.down = function (knex) {
   return knex.schema
-    .alterTable("attendance", function (table) {
+    .alterTable("attendance", (table) => {
       table.dropUnique(["employee_id", "attendance_date"]);
       table.dropColumn("check_in_time");
       table.dropColumn("check_out_time");
@@ -35,7 +35,7 @@ exports.down = function (knex) {
     })
     .then(() => {
       // Re-add the old, original columns
-      return knex.schema.alterTable("attendance", function (table) {
+      return knex.schema.alterTable("attendance", (table) => {
         table.date("attendance_date").notNullable();
         table.time("check_in_time");
         table.time("check_out_time");

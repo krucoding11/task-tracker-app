@@ -1,5 +1,5 @@
 exports.up = function (knex) {
-  return knex.schema.createTable("payroll_details", function (table) {
+  return knex.schema.createTable("payroll_details", (table) => {
     table.increments("id").primary();
     table
       .integer("payroll_id")

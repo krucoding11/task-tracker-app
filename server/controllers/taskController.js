@@ -1,6 +1,33 @@
 const db = require("../config/db");
-const moment = require("moment");
 const { format } = require("date-fns");
+
+const getAuthorizedProjectCreatorIds = async (user) => {
+  // If user is Admin, they are authorized for all.
+  const isAdmin =
+    user.permissions && user.permissions.includes("projects:manage");
+  if (isAdmin) return null; // null means all
+
+  // Check for manager or self access
+  if (user.permissions && user.permissions.includes("project:self")) {
+    let authorizedIds = [user.id];
+
+    // If the user is a manager, include subordinates' IDs
+    if (user.permissions.includes("projects:manage:team")) {
+      const subordinates = await db("employees")
+        .where({ manager_id: user.id })
+        .select("id");
+
+      if (subordinates.length > 0) {
+        const subordinateIds = subordinates.map((sub) => sub.id);
+        authorizedIds = [...authorizedIds, ...subordinateIds];
+      }
+    }
+
+    return [...new Set(authorizedIds)];
+  }
+
+  return []; // No access
+};
 
 exports.getTasksByEmployeeId = async (req, res) => {
   const employeeId = req.user.id;

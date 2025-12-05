@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("employee_job_history", function (table) {
+  return knex.schema.createTable("employee_job_history", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

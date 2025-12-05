@@ -1,8 +1,8 @@
-exports.up = function (knex) {
-  return knex.schema.alterTable("attendance", function (table) {
+exports.up = function (_knex) {
+  return _knex.schema.alterTable("attendance", (table) => {
     table.boolean("is_corrected").defaultTo(false);
   });
 };
-exports.down = function (knex) {
+exports.down = function (_knex) {
   /* ... */
 };

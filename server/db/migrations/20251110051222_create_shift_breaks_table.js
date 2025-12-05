@@ -1,7 +1,7 @@
 // <timestamp>_create_shift_breaks_table.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("shift_breaks", function (table) {
+  return knex.schema.createTable("shift_breaks", (table) => {
     table.increments("id").primary();
 
     table

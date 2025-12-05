@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     // Add columns after the 'work_email' column for better organization
     table.string("personal_email", 100).unique().after("work_email");
     table.string("phone_number", 20).after("personal_email");
@@ -24,7 +24,7 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     // The 'down' function should drop the columns in reverse order
     table.dropColumn("employee_status");
     table.dropColumn("termination_date");

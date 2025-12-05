@@ -1,7 +1,7 @@
 // <timestamp>_create_leave_plan_rules.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("leave_plan_rules", function (table) {
+  return knex.schema.createTable("leave_plan_rules", (table) => {
     table.increments("id").primary();
     table
       .integer("leave_plan_id")

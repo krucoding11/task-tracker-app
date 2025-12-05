@@ -1,5 +1,5 @@
 exports.up = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     // Drop the old text-based role column
     table.dropColumn("role");
 
@@ -14,7 +14,7 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     table.dropForeign("role_id");
     table.dropColumn("role_id");
     table.string("role");

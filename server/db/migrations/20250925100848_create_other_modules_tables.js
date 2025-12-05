@@ -4,7 +4,7 @@ exports.up = function (knex) {
   return (
     knex.schema
       // --- Recruitment Module ---
-      .createTable("job_openings", function (table) {
+      .createTable("job_openings", (table) => {
         table.increments("id").primary();
         table.string("title", 100).notNullable();
         table
@@ -15,7 +15,7 @@ exports.up = function (knex) {
         table.text("description");
         table.string("status", 20).notNullable().defaultTo("Open");
       })
-      .createTable("applicants", function (table) {
+      .createTable("applicants", (table) => {
         table.increments("id").primary();
         table.string("first_name", 50).notNullable();
         table.string("last_name", 50).notNullable();
@@ -23,7 +23,7 @@ exports.up = function (knex) {
         table.string("phone", 20);
         table.string("resume_path", 255);
       })
-      .createTable("applications", function (table) {
+      .createTable("applications", (table) => {
         table.increments("id").primary();
         table
           .integer("job_opening_id")
@@ -44,7 +44,7 @@ exports.up = function (knex) {
       })
 
       // --- Performance Module ---
-      .createTable("performance_reviews", function (table) {
+      .createTable("performance_reviews", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -66,7 +66,7 @@ exports.up = function (knex) {
       })
 
       // --- Asset Module ---
-      .createTable("assets", function (table) {
+      .createTable("assets", (table) => {
         table.increments("id").primary();
         table.string("name", 100).notNullable();
         table.string("asset_type", 50);
@@ -74,7 +74,7 @@ exports.up = function (knex) {
         table.date("purchase_date");
         table.string("status", 20).notNullable().defaultTo("Available"); // Available, Assigned, In Repair, Retired
       })
-      .createTable("employee_assets", function (table) {
+      .createTable("employee_assets", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -95,12 +95,12 @@ exports.up = function (knex) {
       })
 
       // --- Training Module ---
-      .createTable("training_courses", function (table) {
+      .createTable("training_courses", (table) => {
         table.increments("id").primary();
         table.string("name", 100).notNullable();
         table.text("description");
       })
-      .createTable("employee_training", function (table) {
+      .createTable("employee_training", (table) => {
         table
           .integer("employee_id")
           .unsigned()

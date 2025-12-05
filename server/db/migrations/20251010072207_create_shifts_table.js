@@ -1,6 +1,6 @@
 exports.up = function (knex) {
   return knex.schema
-    .createTable("shifts", function (table) {
+    .createTable("shifts", (table) => {
       table.increments("id").primary();
       table.string("shift_name").notNullable().unique(); // e.g., "General Shift", "Night Shift"
       table.time("start_time").notNullable();
@@ -8,7 +8,7 @@ exports.up = function (knex) {
       table.integer("break_duration_minutes").notNullable().defaultTo(60);
     })
     .then(() => {
-      return knex.schema.alterTable("employees", function (table) {
+      return knex.schema.alterTable("employees", (table) => {
         // Add a foreign key to link each employee to a shift
         table
           .integer("shift_id")
@@ -22,7 +22,7 @@ exports.up = function (knex) {
 
 exports.down = function (knex) {
   return knex.schema
-    .alterTable("employees", function (table) {
+    .alterTable("employees", (table) => {
       table.dropColumn("shift_id");
     })
     .then(() => {

@@ -1,7 +1,7 @@
 // <timestamp>_create_approval_workflow_steps.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("approval_workflow_steps", function (table) {
+  return knex.schema.createTable("approval_workflow_steps", (table) => {
     table.increments("id").primary();
     table
       .integer("workflow_id")

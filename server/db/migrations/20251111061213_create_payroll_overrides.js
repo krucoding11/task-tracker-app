@@ -1,7 +1,7 @@
 // <timestamp>_create_payroll_overrides.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("payroll_overrides", function (table) {
+  return knex.schema.createTable("payroll_overrides", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

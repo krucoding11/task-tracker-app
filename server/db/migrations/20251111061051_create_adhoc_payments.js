@@ -1,7 +1,7 @@
 // <timestamp>_create_adhoc_payments.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("adhoc_payments", function (table) {
+  return knex.schema.createTable("adhoc_payments", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

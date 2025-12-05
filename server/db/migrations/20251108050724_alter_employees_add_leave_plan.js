@@ -1,7 +1,7 @@
 // <timestamp>_alter_employees_add_leave_plan.js
 
 exports.up = function (knex) {
-  return knex.schema.table("employees", function (table) {
+  return knex.schema.table("employees", (table) => {
     table
       .integer("leave_plan_id")
       .unsigned()
@@ -12,7 +12,7 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-  return knex.schema.table("employees", function (table) {
+  return knex.schema.table("employees", (table) => {
     table.dropForeign("leave_plan_id");
     table.dropColumn("leave_plan_id");
   });

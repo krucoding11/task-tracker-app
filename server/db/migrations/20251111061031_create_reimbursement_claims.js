@@ -1,7 +1,7 @@
 // <timestamp>_create_reimbursement_claims.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("reimbursement_claims", function (table) {
+  return knex.schema.createTable("reimbursement_claims", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

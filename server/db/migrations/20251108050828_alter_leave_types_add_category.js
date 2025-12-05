@@ -2,12 +2,12 @@
 
 exports.up = function (knex) {
   return knex.schema
-    .alterTable("leave_types", function (table) {
+    .alterTable("leave_types", (table) => {
       table.dropColumn("is_paid");
       table.dropColumn("default_days_per_year");
     })
     .then(() => {
-      return knex.schema.alterTable("leave_types", function (table) {
+      return knex.schema.alterTable("leave_types", (table) => {
         table
           .enu("category", ["Regular", "Unpaid", "Compensatory", "Incident"])
           .defaultTo("Regular")
@@ -20,7 +20,7 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-  return knex.schema.table("leave_types", function (table) {
+  return knex.schema.table("leave_types", (table) => {
     table.dropColumn("category");
     table.dropColumn("is_paid");
   });

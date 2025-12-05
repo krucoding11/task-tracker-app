@@ -1,5 +1,5 @@
 exports.up = function (knex) {
-  return knex.schema.createTable("job_logs", function (table) {
+  return knex.schema.createTable("job_logs", (table) => {
     table.increments("id").primary();
     table.string("job_name").notNullable();
     table.timestamp("start_time").defaultTo(knex.fn.now());
@@ -8,6 +8,6 @@ exports.up = function (knex) {
     table.text("details");
   });
 };
-exports.down = function (knex) {
+exports.down = function (_knex) {
   /* ... */
 };

@@ -5,7 +5,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.alterTable("leave_applications", function (table) {
+  return knex.schema.alterTable("leave_applications", (table) => {
     table
       .string("day_span", 20)
       .notNullable()
@@ -24,7 +24,7 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.alterTable("leave_applications", function (table) {
+  return knex.schema.alterTable("leave_applications", (table) => {
     table.dropColumn("total_days");
     table.dropColumn("day_span");
   });

@@ -1,7 +1,7 @@
 // <timestamp>_create_flexible_leave_policies.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("leave_notice_policies", function (table) {
+  return knex.schema.createTable("leave_notice_policies", (table) => {
     table.increments("id").primary();
 
     table

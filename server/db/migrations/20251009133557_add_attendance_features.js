@@ -2,11 +2,11 @@ exports.up = function (knex) {
   return (
     knex.schema
       // Add the machine ID column to the employees table
-      .alterTable("employees", function (table) {
+      .alterTable("employees", (table) => {
         table.string("machine_user_id").unique().nullable();
       })
       // Create a new table for attendance correction requests
-      .createTable("attendance_requests", function (table) {
+      .createTable("attendance_requests", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -29,6 +29,6 @@ exports.up = function (knex) {
       })
   );
 };
-exports.down = function (knex) {
+exports.down = function () {
   /* ... */
 };
