@@ -1,25 +1,34 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  // Optional: State for error messages
   const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const { login } = useAuth();
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Please enter both email and password.");
       return;
     }
 
-    localStorage.setItem('currentEmail', email);
     setError(null);
-    navigate("/task", {state: {userEmail: email}});
+
+    const result = await login(email, password);
+
+    if(result.success){
+      localStorage.setItem('currentEmail', email);
+      navigate("/task", { state: { userEmail: email }});
+    }else{
+      setError(result.error || 'Login failed. Please try again');   
+    }
   };
 
   const togglePassword = () => {
