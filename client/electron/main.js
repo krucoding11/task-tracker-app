@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, Tray, Menu, nativeImage, globalShortcut } = require("electron");
 const path = require("path");
 const waitPort = require("wait-port");
 
@@ -23,6 +23,11 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   await createWindow();
+
+  // open devTools
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+    win.webContents.toggleDevTools();
+  })
 
   // Load icon safely with nativeImage
   const iconPath = path.join(

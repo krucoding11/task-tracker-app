@@ -4,7 +4,7 @@ import TaskControls from "./Task/TaskControls.js";
 import TaskBoard from "./Task/TaskBoard.js";
 import dummyData from "../dummyData.js";
 import AddTaskModal from "./Task/TaskModal.js";
-
+import { useTasks } from "../context/TaskContext.js";
 export default function TaskPage() {
   
   const [tasks, setTasks] = useState([]);
@@ -23,6 +23,7 @@ export default function TaskPage() {
   });
   
   const navigate = useNavigate();
+  const { fetchTasks } = useTasks();
 
   const employeesList = dummyData.data.flatMap(
     (task) => task.assigned_employees
@@ -67,7 +68,7 @@ export default function TaskPage() {
   };
 
   // 3. HANDLER TO ADD A NEW TASK
-  const addTask = () => {
+ const handleSaveTask = async () => { // Make this function ASYNC
  
     if (formData.title.trim()) { 
       
@@ -84,9 +85,10 @@ export default function TaskPage() {
         duration: 0, // Initialize duration for timer
       };
       
+      // 1. Add the new task to the local state
       setTasks((prevTasks) => [...prevTasks, newTaskObject]);
       
-      // Reset form
+      // 2. Reset form and close the modal
       setFormData({
         title: "",
         description: "",
@@ -99,6 +101,14 @@ export default function TaskPage() {
       
       setIsModalOpen(false);
 
+      // 3. CALL THE fetchTasks API from context to refresh the data
+      const result = await fetchTasks();
+      if (result?.success) {
+        console.log("Tasks list successfully refreshed from API.");
+      } else {
+        console.error("Failed to refresh tasks from API:", result?.error);
+      }
+
     } 
   };
 
@@ -108,7 +118,7 @@ export default function TaskPage() {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      addTask();
+      handleSaveTask();
     }
   };
 
@@ -164,7 +174,7 @@ export default function TaskPage() {
           newTask={newTask}
           setNewTask={setNewTask}
           onClose={() => setIsModalOpen(false)}
-          onSave={addTask}
+          onSave={handleSaveTask}
           handleKeyDown={handleKeyDown}
           formData={formData}
           setFormData={setFormData}

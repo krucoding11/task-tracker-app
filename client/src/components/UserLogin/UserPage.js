@@ -26,9 +26,7 @@ function UserPage() {
         <div className="items-center space-x-4">
           <FaUserCircle className="mr-2" />
           <div>
-            {/* <p className="text-lg font-semibold text-gray-900">
-              {currentUser.name}
-            </p> */}
+       
             <p className="text-sm text-gray-500">{currentUser.email}</p>
           </div>
         </div>
