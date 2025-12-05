@@ -1,7 +1,7 @@
 // <timestamp>_create_leave_plans.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("leave_plans", function (table) {
+  return knex.schema.createTable("leave_plans", (table) => {
     table.increments("id").primary();
     table.string("plan_name").notNullable().unique();
     table.text("description");

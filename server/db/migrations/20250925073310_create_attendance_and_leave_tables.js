@@ -8,14 +8,14 @@ exports.up = function (knex) {
   return (
     knex.schema
       // Table for different types of leave (e.g., Sick, Casual)
-      .createTable("leave_types", function (table) {
+      .createTable("leave_types", (table) => {
         table.increments("id").primary();
         table.string("name", 50).notNullable().unique();
         table.boolean("is_paid").defaultTo(true);
         table.integer("default_days_per_year").notNullable();
       })
       // Table for employees to apply for leave
-      .createTable("leave_applications", function (table) {
+      .createTable("leave_applications", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -43,7 +43,7 @@ exports.up = function (knex) {
         table.timestamp("applied_at").defaultTo(knex.fn.now());
       })
       // Table to track the remaining leave days for each employee
-      .createTable("employee_leave_balances", function (table) {
+      .createTable("employee_leave_balances", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -63,7 +63,7 @@ exports.up = function (knex) {
         table.unique(["employee_id", "leave_type_id"]);
       })
       // Table for daily attendance records
-      .createTable("attendance", function (table) {
+      .createTable("attendance", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -79,7 +79,7 @@ exports.up = function (knex) {
         table.unique(["employee_id", "attendance_date"]);
       })
       // Table for company-wide holidays
-      .createTable("holidays", function (table) {
+      .createTable("holidays", (table) => {
         table.increments("id").primary();
         table.string("name", 100).notNullable();
         table.date("holiday_date").notNullable().unique();

@@ -1,7 +1,7 @@
 // <timestamp>_create_employee_incident_logs.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("employee_incident_logs", function (table) {
+  return knex.schema.createTable("employee_incident_logs", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

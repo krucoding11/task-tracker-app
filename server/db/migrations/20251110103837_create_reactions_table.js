@@ -1,7 +1,7 @@
 // <timestamp>_create_reactions_table.js
 
 exports.up = function (knex) {
-  return knex.schema.createTable("reactions", function (table) {
+  return knex.schema.createTable("reactions", (table) => {
     table.increments("id").primary();
 
     // 1. The ID of the item (e.g., 5)

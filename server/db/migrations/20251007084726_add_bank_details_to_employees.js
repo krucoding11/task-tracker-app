@@ -1,5 +1,5 @@
 exports.up = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     table.string("bank_name");
     table.string("branch_name");
     table.string("account_number");
@@ -9,7 +9,7 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     table.dropColumn("bank_name");
     table.dropColumn("branch_name");
     table.dropColumn("account_number");

@@ -6,17 +6,17 @@
  */
 exports.up = function (knex) {
   return knex.schema
-    .createTable("departments", function (table) {
+    .createTable("departments", (table) => {
       table.increments("id").primary();
       table.string("name", 100).notNullable().unique();
       table.text("description");
     })
-    .createTable("designations", function (table) {
+    .createTable("designations", (table) => {
       table.increments("id").primary();
       table.string("title", 100).notNullable().unique();
       table.text("description");
     })
-    .createTable("employees", function (table) {
+    .createTable("employees", (table) => {
       table.increments("id").primary();
       table.string("employee_id", 20).notNullable().unique();
       table.string("first_name", 50).notNullable();

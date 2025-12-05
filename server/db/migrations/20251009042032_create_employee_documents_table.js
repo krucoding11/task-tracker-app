@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("employee_documents", function (table) {
+  return knex.schema.createTable("employee_documents", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")
@@ -24,7 +24,7 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.alterTable("employees", function (table) {
+  return knex.schema.alterTable("employees", (table) => {
     table.dropColumn("termination_reason");
   });
 };

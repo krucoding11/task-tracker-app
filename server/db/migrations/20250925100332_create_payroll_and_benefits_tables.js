@@ -4,14 +4,14 @@ exports.up = function (knex) {
   return (
     knex.schema
       // Master list of all benefits the company offers
-      .createTable("benefits", function (table) {
+      .createTable("benefits", (table) => {
         table.increments("id").primary();
         table.string("name", 100).notNullable().unique();
         table.string("provider", 100);
         table.text("description");
       })
       // Link table to assign benefits to employees (Many-to-Many)
-      .createTable("employee_benefits", function (table) {
+      .createTable("employee_benefits", (table) => {
         table
           .integer("employee_id")
           .unsigned()
@@ -30,13 +30,13 @@ exports.up = function (knex) {
         table.primary(["employee_id", "benefit_id"]); // Composite primary key
       })
       // Master list of salary components (e.g., Basic, HRA, Provident Fund)
-      .createTable("salary_components", function (table) {
+      .createTable("salary_components", (table) => {
         table.increments("id").primary();
         table.string("name", 100).notNullable().unique();
         table.string("type", 20).notNullable(); // 'Earning' or 'Deduction'
       })
       // Stores the salary history for each employee
-      .createTable("employee_salary_history", function (table) {
+      .createTable("employee_salary_history", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")
@@ -57,7 +57,7 @@ exports.up = function (knex) {
         table.date("effective_end_date"); // Null means it's the current salary
       })
       // Stores the generated payslip for each employee for each pay period
-      .createTable("payrolls", function (table) {
+      .createTable("payrolls", (table) => {
         table.increments("id").primary();
         table
           .integer("employee_id")

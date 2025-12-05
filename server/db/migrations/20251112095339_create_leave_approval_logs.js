@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("leave_approval_logs", function (table) {
+  return knex.schema.createTable("leave_approval_logs", (table) => {
     table.increments("id").primary();
 
     table

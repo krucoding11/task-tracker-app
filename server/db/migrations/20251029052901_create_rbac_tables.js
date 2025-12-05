@@ -2,19 +2,19 @@ exports.up = function (knex) {
   return (
     knex.schema
       // 1. Create the 'roles' table
-      .createTable("roles", function (table) {
+      .createTable("roles", (table) => {
         table.increments("id").primary();
         table.string("name").notNullable().unique();
         table.text("description");
       })
       // 2. Create the 'permissions' table
-      .createTable("permissions", function (table) {
+      .createTable("permissions", (table) => {
         table.increments("id").primary();
         table.string("action").notNullable().unique(); // e.g., 'employee:create', 'payroll:run'
         table.text("description");
       })
       // 3. Create the 'role_permissions' junction table
-      .createTable("role_permissions", function (table) {
+      .createTable("role_permissions", (table) => {
         table
           .integer("role_id")
           .unsigned()

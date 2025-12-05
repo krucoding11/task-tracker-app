@@ -1,7 +1,7 @@
 // <timestamp>_alter_leave_applications_for_workflows.js
 
 exports.up = function (knex) {
-  return knex.schema.table("leave_applications", function (table) {
+  return knex.schema.table("leave_applications", (table) => {
     // 1. Add column to link to the workflow
     table
       .integer("approval_workflow_id")
@@ -20,7 +20,7 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-  return knex.schema.table("leave_applications", function (table) {
+  return knex.schema.table("leave_applications", (table) => {
     // Re-add the old column
     table
       .integer("approved_by_id")

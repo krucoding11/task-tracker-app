@@ -2,7 +2,7 @@
 
 exports.up = async function (knex) {
   // --- Step 1: Create the new, more flexible table ---
-  await knex.schema.createTable("asset_assignments", function (table) {
+  await knex.schema.createTable("asset_assignments", (table) => {
     table.increments("id").primary();
 
     table
@@ -61,7 +61,7 @@ exports.up = async function (knex) {
 
 exports.down = async function (knex) {
   // --- Step 1: Create the old 'employee_assets' table ---
-  await knex.schema.createTable("employee_assets", function (table) {
+  await knex.schema.createTable("employee_assets", (table) => {
     table.increments("id").primary();
     table
       .integer("employee_id")

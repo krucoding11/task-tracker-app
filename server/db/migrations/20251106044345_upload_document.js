@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("document_type", function (table) {
+  return knex.schema.createTable("document_type", (table) => {
     table.increments("id").primary();
     table.string("type").notNullable().unique();
     table.string("description").notNullable();

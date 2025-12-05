@@ -3,11 +3,11 @@
  * @returns { Promise<void> }
  */
 exports.up = async function (knex) {
-  await knex.schema.alterTable("employee_documents", function (table) {
+  await knex.schema.alterTable("employee_documents", (table) => {
     table.dropColumn("document_type");
   });
 
-  await knex.schema.alterTable("employee_documents", function (table) {
+  await knex.schema.alterTable("employee_documents", (table) => {
     table
       .integer("document_type_id")
       .unsigned()
@@ -23,7 +23,7 @@ exports.up = async function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = async function (knex) {
-  await knex.schema.alterTable("employee_documents", function (table) {
+  await knex.schema.alterTable("employee_documents", (table) => {
     table.dropForeign("document_type_id");
     table.dropColumn("document_type_id");
     table.string("document_type").notNullable();

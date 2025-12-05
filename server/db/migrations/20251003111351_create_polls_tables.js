@@ -4,7 +4,7 @@
  */
 exports.up = function (knex) {
   return knex.schema
-    .createTable("polls", function (table) {
+    .createTable("polls", (table) => {
       table.increments("id").primary();
       table.text("question").notNullable();
       table
@@ -15,7 +15,7 @@ exports.up = function (knex) {
         .inTable("employees");
       table.timestamp("created_at").defaultTo(knex.fn.now());
     })
-    .createTable("poll_options", function (table) {
+    .createTable("poll_options", (table) => {
       table.increments("id").primary();
       table
         .integer("poll_id")
@@ -26,7 +26,7 @@ exports.up = function (knex) {
         .onDelete("CASCADE");
       table.string("option_text").notNullable();
     })
-    .createTable("poll_votes", function (table) {
+    .createTable("poll_votes", (table) => {
       table.increments("id").primary();
       table
         .integer("poll_id")
