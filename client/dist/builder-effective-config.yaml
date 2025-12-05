@@ -1,0 +1,13 @@
+directories:
+  output: dist
+  buildResources: assets
+files:
+  - filter:
+      - build/**/*
+extraMetadata:
+  main: build/electron.js
+appId: com.taskapp.electron
+mac:
+  category: public.app-category.productivity
+extends: react-cra
+electronVersion: 39.2.4
