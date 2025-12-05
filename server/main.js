@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const sequelize = require('./config/sequelize');
+const sequelize = require("./config/sequelize");
 
 const app = express();
 console.log("ENV Loaded and DB_NAME...............", process.env.DB_NAME);
@@ -8,17 +8,17 @@ console.log("ENV Loaded and DB_NAME...............", process.env.DB_NAME);
 sequelize
   .sync({ alter: true }, { force: true })
   .then(() => {
-    console.log('All tables synced.');
+    console.log("All tables synced.");
   })
-  .catch((err) => console.error('Sync failed:', err));
+  .catch((err) => console.error("Sync failed:", err));
 
 sequelize
   .authenticate()
   .then(() => {
-    console.log('Connection has been established successfully..!!');
+    console.log("Connection has been established successfully..!!");
   })
   .catch((err) => {
-    console.error('error connecting to db............', err);
+    console.error("error connecting to db............", err);
   });
 
 app.use(express.json());
@@ -31,6 +31,7 @@ app.use(
 
 const authRoutes = require("./routes/authRoutes.js");
 const taskRoutes = require("./routes/taskRoutes.js");
+const projectRoutes = require("./routes/projectRoutes.js");
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}..!!`));
@@ -41,3 +42,4 @@ app.get("/", (req, res) => {
 // app.use("/v1", v1);
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/projects", projectRoutes);
