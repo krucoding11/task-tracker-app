@@ -60,3 +60,61 @@ exports.getAllProjects = async (req, res) => {
     res.status(500).json({ message: "Error fetching projects", error });
   }
 };
+
+// response :
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "id": 2,
+//             "name": "HRMs",
+//             "description": "<p>Video Upload in announcement</p>",
+//             "start_date": "2025-11-20",
+//             "end_date": "2025-11-21",
+//             "status": "planned",
+//             "employees_id": 4,
+//             "created_at": "2025-11-20T06:18:35.807Z",
+//             "updated_at": "2025-11-20T06:18:35.807Z",
+//             "attachment_ids": [],
+//             "assigned_employees": [
+//                 {
+//                     "id": 5,
+//                     "profile_picture_url": "/uploads/profile_pictures/5/1763641162172-785133894.jpg",
+//                     "full_name": "Darshan Dhameliya"
+//                 },
+//                 {
+//                     "id": 28,
+//                     "profile_picture_url": "/uploads/profile_pictures/28/1763642894569-329501131.jpg",
+//                     "full_name": "Krusha  Golakiya"
+//                 },
+//                 {
+//                     "id": 6,
+//                     "profile_picture_url": "/uploads/image-1762001461119.png",
+//                     "full_name": "Darshan  Raghvani"
+//                 }
+//             ],
+//             "attached_files": []
+//         },
+//         {
+//             "id": 3,
+//             "name": "YSN",
+//             "description": "<p>YSN</p>",
+//             "start_date": "2025-11-21",
+//             "end_date": "2025-11-20",
+//             "status": "planned",
+//             "employees_id": 25,
+//             "created_at": "2025-11-21T07:55:58.993Z",
+//             "updated_at": "2025-11-21T07:55:58.993Z",
+//             "attachment_ids": [],
+//             "assigned_employees": [
+//                 {
+//                     "id": 8,
+//                     "profile_picture_url": "/uploads/image-1762003690260.png",
+//                     "full_name": "Krins Golakiya"
+//                 }
+//             ],
+//             "attached_files": []
+//         }
+//     ],
+//     "message": "Fetched all projects with employees and task info"
+// }
