@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     if(result.success){
       localStorage.setItem('currentEmail', email);
-      navigate("/task", { state: { userEmail: email }});
+      navigate("/project-task", { state: { userEmail: email }});
     }else{
       setError(result.error || 'Login failed. Please try again');   
     }
@@ -101,16 +101,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* New Registration Link */}
-        <p className="text-center text-sm text-gray-600 pt-4">
-          Haven't registered yet?{" "}
-          <button
-            onClick={() => navigate("/register")}
-            className="text-indigo-600 hover:text-indigo-800 font-medium focus:outline-none"
-          >
-            Create an Account
-          </button>
-        </p>
       </div>
     </div>
   );
