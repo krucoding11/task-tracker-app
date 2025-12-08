@@ -4,7 +4,7 @@ import TaskControls from "./Task/TaskControls.js";
 import TaskBoard from "./Task/TaskBoard.js";
 import dummyData from "../dummyData.js";
 import AddTaskModal from "./Task/TaskModal.js";
-import { useTasks } from "../context/TaskContext.js";
+// import { useTasks } from "../context/TaskContext.js";
 export default function TaskPage() {
   
   const [tasks, setTasks] = useState([]);
@@ -23,7 +23,7 @@ export default function TaskPage() {
   });
   
   const navigate = useNavigate();
-  const { fetchTasks } = useTasks();
+  // const { fetchTasks } = useTasks();
 
   const employeesList = dummyData.data.flatMap(
     (task) => task.assigned_employees
@@ -102,12 +102,12 @@ export default function TaskPage() {
       setIsModalOpen(false);
 
       // 3. CALL THE fetchTasks API from context to refresh the data
-      const result = await fetchTasks();
-      if (result?.success) {
-        console.log("Tasks list successfully refreshed from API.");
-      } else {
-        console.error("Failed to refresh tasks from API:", result?.error);
-      }
+      // const result = await fetchTasks();
+      // if (result?.success) {
+      //   console.log("Tasks list successfully refreshed from API.");
+      // } else {
+      //   console.error("Failed to refresh tasks from API:", result?.error);
+      // }
 
     } 
   };

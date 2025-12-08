@@ -6,6 +6,7 @@ const {
   nativeImage,
   globalShortcut,
   screen,
+  ipcMain
 } = require("electron");
 const path = require("path");
 const waitPort = require("wait-port");
@@ -95,6 +96,25 @@ app.whenReady().then(async () => {
     win.setPosition(x, y);
     win.show();
   });
+
+  ipcMain.on("tray:set-status", (event, status) => {
+    let icon = null;
+
+    if(status === "green"){
+      icon = nativeImage.createFromPath(
+        path.join(__dirname, "green-dot.png")
+      ).resize({ width: 10, height: 10});
+    }else if(status === "red"){
+      icon = nativeImage.createFromPath(
+        path.join(__dirname, "red-dot.png")
+      ).resize({ width: 10, height: 10});
+    }else{
+      icon = nativeImage.createFromPath(
+        path.join(__dirname, "tray.png")
+      ).resize({ width: 18, height: 18});
+    }
+    tray.setImage(icon);
+  })
 
   // hide popup when clicking outside
   // win.on("blur", () => {
