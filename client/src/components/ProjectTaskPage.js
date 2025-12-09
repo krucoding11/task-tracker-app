@@ -101,9 +101,9 @@ export default function ProjectTaskPage() {
       : tasks;
 
   const taskOption = filteredTasks.map((t) => {
-    // const historyTask = taskHistory.find((ht) => ht.value === t.id);
+    const historyTask = taskHistory.find((ht) => ht.value === t.id);
 
-    const savedTime = t.savedTime ?? 0;
+    const savedTime = historyTask?.savedTime ?? 0;
     const formatted = `${String(Math.floor(savedTime / 60)).padStart(2, "0")}:${String(savedTime % 60).padStart(2, "0")}`;
 
     return {

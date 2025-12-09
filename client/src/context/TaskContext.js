@@ -21,7 +21,7 @@ export const TaskProvider = ({ children }) => {
         assigned_to = "",
     } = {}) => {
         if(!authToken) return;
-        try {
+        try {   
             setLoading(true);
             setError("");
             
