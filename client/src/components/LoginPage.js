@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { useAuth } from "../context/AuthContext";
@@ -10,7 +10,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
 
-  const { login } = useAuth();
+  const { login, authToken } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -35,11 +35,16 @@ export default function LoginPage() {
     setShowPassword(!showPassword);
   }
 
+  useEffect(() => {
+    if(authToken){
+      navigate("/project-task");
+    }
+  },[authToken, navigate]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-xl">
-        <h1 className="text-3xl font-bold text-center text-gray-800">Welcome Back</h1>
-        <p className="text-center text-gray-500">Sign in to continue to your dashboard.</p>
+        <h1 className="text-3xl font-bold text-center text-gray-800">Welcome to Task Tracker App</h1>
 
         <form className="space-y-4" onSubmit={handleLogin}>
           {error && (
