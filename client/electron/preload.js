@@ -1,11 +1,9 @@
-window.electronAPI = {
-  ping: () => console.log("Preload loaded!")
-};
+// window.electronAPI = {
+//   ping: () => console.log("Preload loaded!")
+// };
 
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("electron",{
-  ipcRenderer: {
-    send: (channel, data) => ipcRenderer.send(channel, data)
-  }
-})  
+contextBridge.exposeInMainWorld("electronAPI",{
+  sendStatus: (status) => ipcRenderer.send("tray:set-status", status),
+});           
