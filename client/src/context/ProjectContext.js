@@ -4,9 +4,9 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const TaskContext = createContext();
+const ProjectContext = createContext();
 
-export const TaskProvider = ({ children }) => {
+export const ProjectProvider = ({ children }) => {
     const { authToken } = useAuth();
 
     const [projects, setProjects] = useState([]);
@@ -14,8 +14,7 @@ export const TaskProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const fetcProjects = async ({
-    } = {}) => {
+    const fetchProjects = async () => {
         if(!authToken) return;
         try {
             setLoading(true);
@@ -38,10 +37,10 @@ export const TaskProvider = ({ children }) => {
     };
 
   return (
-    <ProjectContext.Provider value={{ projects, meta, loading, error, fetcProjects}}>
+    <ProjectContext.Provider value={{ projects, meta, loading, error, fetchProjects}}>
       {children}
     </ProjectContext.Provider>
   );
 };
 
-export const useTasks = () => useContext(ProjectContext);
+export const useProject = () => useContext(ProjectContext);

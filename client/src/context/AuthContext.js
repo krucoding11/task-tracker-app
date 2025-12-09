@@ -54,6 +54,8 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         setAuthToken(null);
+        localStorage.removeItem("authToken");
+        setUser(null);
     };
 
     const value = {
