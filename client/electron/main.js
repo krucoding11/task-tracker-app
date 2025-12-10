@@ -10,6 +10,8 @@ const {
 const path = require("path");
 const waitPort = require("wait-port");
 
+let forceQuit = false;
+
 const platform = process.platform;
 
 let tray = null;
@@ -18,10 +20,10 @@ let keepAliveWin = null;
 const winWidth = 500;
 const winHeight = 400;
 
-function resourcePath(file){
+function resourcePath(file) {
   return app.isPackaged
-  ? path.join(process.resourcesPath, file)
-  : path.join(__dirname, file);
+    ? path.join(process.resourcesPath, file)
+    : path.join(__dirname, file);
 }
 
 function createKeepAliveWindow() {
@@ -76,8 +78,10 @@ async function createWindow() {
   // win.setAlwaysOnTop(true, platform === "darwin" ? "floating" : "screen-saver");
 
   win.on("close", (e) => {
-    e.preventDefault();
-    win.hide();
+    if (!forceQuit) {
+      e.preventDefault();
+      win.hide();
+    }
   });
 
   if (!app.isPackaged) {
@@ -155,7 +159,13 @@ app.whenReady().then(async () => {
 
   const menu = Menu.buildFromTemplate([
     { label: "Open App", click: () => win.show() },
-    { role: "quit" },
+    {
+      label: "Quit App",
+      click: () => {
+        forceQuit = true;
+        app.quit();
+      },
+    },
   ]);
 
   tray.on("right-click", () => {
@@ -207,7 +217,9 @@ app.whenReady().then(async () => {
     } else if (status === "red") {
       tray.setImage(overlayDot(base, resourcePath("dot-red.png")));
     } else {
-      tray.setImage(nativeImage.createFromPath(base).resize({ width: 22, height: 22 }));
+      tray.setImage(
+        nativeImage.createFromPath(base).resize({ width: 22, height: 22 })
+      );
     }
     // let iconFile = "tray.png";
 
