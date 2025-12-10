@@ -2,6 +2,7 @@ const db = require("../config/db");
 const { format } = require("date-fns");
 
 const getAuthorizedProjectCreatorIds = async (user) => {
+  console.log("getAuthorizedProjectCreatorIds function....................");
   // If user is Admin, they are authorized for all.
   const isAdmin =
     user.permissions && user.permissions.includes("projects:manage");
@@ -30,6 +31,8 @@ const getAuthorizedProjectCreatorIds = async (user) => {
 };
 
 exports.getTasksByEmployeeId = async (req, res) => {
+  console.log("getTasksByEmployeeId api...................");
+
   const employeeId = req.user.id;
   const user = req.user;
 
@@ -363,6 +366,8 @@ exports.getTasksByEmployeeId = async (req, res) => {
 // }
 
 exports.getTasksByProject = async (req, res) => {
+  console.log("getTasksByProject api...................");
+
   const { projectId } = req.params;
 
   try {
@@ -635,6 +640,8 @@ exports.getTasksByProject = async (req, res) => {
 // };
 
 exports.logTime = async (req, res) => {
+  console.log("logTime api...................");
+
   const { task_id, hours_spent, entry_date, notes } = req.body;
   const employeeId = req.user.id;
 
@@ -714,6 +721,8 @@ exports.logTime = async (req, res) => {
 // }
 
 exports.getTimeEntriesForTask = async (req, res) => {
+  console.log("getTimeEntriesForTask api...................");
+
   const { taskId } = req.params;
   try {
     const timeEntries = await db("time_entries")
