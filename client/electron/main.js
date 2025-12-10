@@ -4,7 +4,6 @@ const {
   Tray,
   Menu,
   nativeImage,
-  globalShortcut,
   screen,
   ipcMain,
 } = require("electron");
@@ -40,12 +39,13 @@ async function createWindow() {
     width: winWidth,
     height: winHeight,
     type: platform === "darwin" ? "panel" : undefined,
-    focusable: platform !== "darwin",
+    // focusable: platform !== "darwin",
+    focusable: true,
     frame: false,
     // transparent: true,
     alwaysOnTop: true,
     resizable: false,
-    movable: false,
+    movable: true,
     maximizable: false,
     minimizable: false,
     fullscreenable: false,
@@ -95,9 +95,9 @@ app.whenReady().then(async () => {
   await createWindow();
 
   // open devTools
-  globalShortcut.register("CommandOrControl+Shift+I", () => {
-    win.webContents.toggleDevTools();
-  });
+  // globalShortcut.register("CommandOrControl+Shift+I", () => {
+  //   win.webContents.toggleDevTools();
+  // });
 
   // Load icon safely with nativeImage
   const iconPath = path.join(
