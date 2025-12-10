@@ -2,6 +2,8 @@ const db = require("../config/db.js");
 
 exports.getAllProjects = async (req, res) => {
   try {
+    console.log("getAllProjects api...................");
+
     const projects = await db("projects").select("*");
 
     const projectsWithDetails = await Promise.all(
