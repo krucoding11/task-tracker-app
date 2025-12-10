@@ -68,40 +68,43 @@ export default function ProjectTaskPage() {
     }
   };
 
- const stopTimer = async () => {
-  clearInterval(window.timer);
-  window.timer = null;
-  window.electronAPI?.sendStatus("red");
+  const stopTimer = async () => {
+    clearInterval(window.timer);
+    window.timer = null;
+    window.electronAPI?.sendStatus("red");
 
-  if (!task) return;
+    if (!task) return;
 
-  const updatedTask = { ...task, savedTime: Math.floor(time) };
+    const updatedTask = { ...task, savedTime: Math.floor(time) };
 
-  // update taskHistory
-  setTaskHistory((prev) => [
-    ...prev.filter((t) => t.value !== task.value),
-    updatedTask,
-  ]);
+    // update taskHistory
+    setTaskHistory((prev) => [
+      ...prev.filter((t) => t.value !== task.value),
+      updatedTask,
+    ]);
 
-  // update current task object
-  setTask(updatedTask);
+    // remove localStorage
+    localStorage.removeItem(`timer-${task.value}`);
 
-  // remove localStorage
-  localStorage.removeItem(`timer-${task.value}`);
+    setTimeout(() => {
+      const newOption = taskOption.find(
+        (opt) => opt.value === updatedTask.value
+      );
+      if (newOption) setTask(newOption);
+    }, 50);
 
-  try {
-    const entryDate = new Date().toISOString().split("T")[0];
-    await logTime({
-      taskId: task.value,
-      hoursSpent: time / 3600,
-      entryDate,
-      notes: `Timer logged via timer`,
-    });
-  } catch (error) {
-    console.error("Failed to log time", error);
-  }
-};
-
+    try {
+      const entryDate = new Date().toISOString().split("T")[0];
+      await logTime({
+        taskId: task.value,
+        hoursSpent: time / 3600,
+        entryDate,
+        notes: `Timer logged via timer`,
+      });
+    } catch (error) {
+      console.error("Failed to log time", error);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -114,26 +117,30 @@ export default function ProjectTaskPage() {
       : tasks;
 
   const taskOption = filteredTasks.map((t) => {
-  const historyTask = taskHistory.find(ht => ht.value === t.id);
-  const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
-  const formatted = `${String(Math.floor(savedTime / 60)).padStart(2, "0")}:${String(savedTime % 60).padStart(2, "0")}`;
+    const historyTask = taskHistory.find((ht) => ht.value === t.id);
+    // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
+    const localTime = Number(localStorage.getItem(`timer-${t.id}`));
+    const savedTime = localTime > 0 ? localTime : historyTask?.savedTime ?? t.savedTime ?? 0;
+    const formatted = `${String(Math.floor(savedTime / 60)).padStart(
+      2,
+      "0"
+    )}:${String(savedTime % 60).padStart(2, "0")}`;
 
-  return {
-    value: t.id,
-    // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
-    label: (
-      <div className="flex justify-between w-full items-center">
-        <span>{t.title}</span>
-        {savedTime > 0 && (
-          <span className="text-red-500 font-semibold">{formatted}</span>
-        )}
-      </div>
-    ),
-    savedTime,
-    description: t.description,
-  };
-});
-
+    return {
+      value: t.id,
+      // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
+      label: (
+        <div className="flex justify-between w-full items-center">
+          <span>{t.title}</span>
+          {savedTime > 0 && (
+            <span className="text-red-500 font-semibold">{formatted}</span>
+          )}
+        </div>
+      ),
+      savedTime,
+      description: t.description,
+    };
+  });
 
   useEffect(() => {
     setTask(null);
@@ -314,5 +321,5 @@ export default function ProjectTaskPage() {
   );
 }
 //when i clicked on stop button then task update at tasklist on at searchbar
-//suppose i select task & i click on start button then timer started after that at 00:46 time, i click on stop button then time printed at searchbar & tasklist successfully. after that i select other task & perform 
-// timer update at searchbar 
+//suppose i select task & i click on start button then timer started after that at 00:46 time, i click on stop button then time printed at searchbar & tasklist successfully. after that i select other task & perform
+// timer update at searchbar
