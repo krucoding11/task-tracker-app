@@ -17,7 +17,7 @@ const platform = process.platform;
 let tray = null;
 let win = null;
 let keepAliveWin = null;
-const winWidth = 500;
+const winWidth = 400;
 const winHeight = 400;
 
 function resourcePath(file) {

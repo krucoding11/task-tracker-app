@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TaskContext";
 import { useProject } from "../context/ProjectContext";
+import { FaCircleUser } from "react-icons/fa6";
+import { IoIosClose } from "react-icons/io";
 
 export default function ProjectTaskPage() {
   const { user, logout, authToken } = useAuth();
@@ -16,6 +18,7 @@ export default function ProjectTaskPage() {
   const [taskHistory, setTaskHistory] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
   // const [description, setDescription] = useState("");
 
   const navigate = useNavigate();
@@ -215,11 +218,63 @@ export default function ProjectTaskPage() {
   return (
     <div className="max-w-md mx-auto px-1 py-2 space-y-4 font-sans bg-white mt-2 mb-2">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <span className="font-semibold">{user?.work_email}</span>
+      <div className="flex justify-between items-center mt-1">
+        {/* <span className="font-semibold">{user?.work_email}</span> */}
+        <button
+          onClick={() => setShowUserModal(true)}
+          className="font-semibold"
+        >
+          <FaCircleUser className="text-[30px]" />
+        </button>
+
+        {/* ************** user modal ************* */}
+        {showUserModal && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+            onClick={() => setShowUserModal(false)}
+          >
+            <div 
+              className="bg-white p-6 rounded-lg shadow-lg w-[300px] text-center relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="absolute right-3 top-3 text-gray-600 hover:text-gray-800 text-xl"
+              >
+                <IoIosClose />
+              </button>
+              <h2 className="text-lg font-semibold">User Details:</h2>
+              <div className="text-gray-700 flex justify-center gap-2 mt-2">
+                <strong>Email:</strong>
+                <span>{user?.work_email || "No email"}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold font-mono w-[70px] text-center">
+          {String(Math.floor(time / 60)).padStart(2, "0")}:
+          {String(Math.floor(time % 60)).padStart(2, "0")}
+        </h2>
+
+        <button
+          onClick={() => (isRunning ? stopTimer() : startTimer())}
+          disabled={!task}
+          className={`px-4 py-1 rounded text-white font-semibold ${
+            !task
+              ? "bg-gray-300"
+              : isRunning
+              ? "bg-red-500 hover:bg-red-600"
+              : "bg-green-500 hover:bg-green-600"
+          }`}
+        >
+          {isRunning ? "Stop" : "Start"}
+        </button>
+        </div>
         <button
           onClick={handleLogout}
-          className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition duration-150 ease-in-out"
+          className="px-4 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition duration-150 ease-in-out"
         >
           Logout
         </button>
@@ -235,6 +290,7 @@ export default function ProjectTaskPage() {
           onChange={setProject}
           placeholder="Select project"
           isSearchable
+          menuPosition="fixed"
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
@@ -259,6 +315,7 @@ export default function ProjectTaskPage() {
           onChange={(selected) => setTask(selected)}
           placeholder={project ? "Select task" : "Select project first"}
           isSearchable
+          menuPosition="fixed"
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
@@ -267,13 +324,9 @@ export default function ProjectTaskPage() {
       </div>
 
       {/* timer */}
-      <div className="flex items-center gap-4">
-        <h2 className="text-xl font-bold font-mono w-[70px] text-center">
-          {String(Math.floor(time / 60)).padStart(2, "0")}:
-          {String(Math.floor(time % 60)).padStart(2, "0")}
-        </h2>
-
-        <button
+      {/* <div className="flex items-center gap-4"> */}
+    
+        {/* <button
           onClick={startTimer}
           disabled={!task}
           className={`px-3 py-1 rounded text-white ${
@@ -294,8 +347,8 @@ export default function ProjectTaskPage() {
           } `}
         >
           Stop
-        </button>
-      </div>
+        </button> */}
+      {/* </div> */}
 
       {/* description */}
       {/* <textarea
