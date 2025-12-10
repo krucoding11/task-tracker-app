@@ -179,8 +179,8 @@ app.whenReady().then(async () => {
     });
 
     const dot = nativeImage.createFromPath(dotPath).resize({
-      width: 6,
-      height: 6,
+      width: 8,
+      height: 8,
     });
 
     // convert base into bitmap buffer
@@ -192,13 +192,13 @@ app.whenReady().then(async () => {
     const height = base.getSize().height;
 
     // pixel position - below icon
-    const offsetX = Math.floor(width / 2) - 3; // horizontally centered
+    const offsetX = Math.floor(width - 8) / 2; // horizontally centered
     const offsetY = height - 6; // near bottom icon
 
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 6; x++) {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
         const baseIdx = ((offsetY + y) * width + (offsetX + x)) * 4; // y - which row we are drawing on, width - how many pixels per row, x - which column we are drawing to, 4 - pixels has 4 values (dotIdx = y * 6 + x) * 4 - y*6: jumps the current row, +x: moves to correct column, *4: each dot pixel is RGBA
-        const dotIdx = (y * 6 + x) * 4;
+        const dotIdx = (y * 8 + x) * 4;
 
         baseBmp[baseIdx] = dotBmp[dotIdx]; // baseIdx = tells where to pase, dotIdx = tells where to read from
         baseBmp[baseIdx + 1] = dotBmp[dotIdx + 1];

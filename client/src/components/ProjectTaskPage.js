@@ -15,6 +15,7 @@ export default function ProjectTaskPage() {
   const [time, setTime] = useState(0);
   const [taskHistory, setTaskHistory] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
   // const [description, setDescription] = useState("");
 
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ export default function ProjectTaskPage() {
 
   const startTimer = () => {
     if (!window.timer && task) {
+      setIsRunning(true);
       window.timer = setInterval(() => {
         setTime((t) => {
           const newTime = t + 1;
@@ -71,6 +73,7 @@ export default function ProjectTaskPage() {
   const stopTimer = async () => {
     clearInterval(window.timer);
     window.timer = null;
+    setIsRunning(false);
     window.electronAPI?.sendStatus("red");
 
     if (!task) return;
@@ -235,6 +238,7 @@ export default function ProjectTaskPage() {
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
+          isDisabled={isRunning}
         />
         {/* </div> */}
         {/* <button
@@ -258,7 +262,7 @@ export default function ProjectTaskPage() {
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
-          isDisabled={!project}
+          isDisabled={isRunning || !project}
         />
       </div>
 
@@ -320,6 +324,3 @@ export default function ProjectTaskPage() {
     </div>
   );
 }
-//when i clicked on stop button then task update at tasklist on at searchbar
-//suppose i select task & i click on start button then timer started after that at 00:46 time, i click on stop button then time printed at searchbar & tasklist successfully. after that i select other task & perform
-// timer update at searchbar
