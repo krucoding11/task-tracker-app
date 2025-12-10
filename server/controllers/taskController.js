@@ -405,7 +405,7 @@ exports.getTasksByProject = async (req, res) => {
           .where({ task_id: task.id })
           .sum("hours_spent as total");
 
-          const savedTime = Math.round((timeSum[0].total || 0) * 3600);
+        const savedTime = Math.round((timeSum[0].total || 0) * 3600);
 
         let attachedFiles = [];
         if (task.attachment_ids && task.attachment_ids.length > 0) {
@@ -419,7 +419,7 @@ exports.getTasksByProject = async (req, res) => {
           project_name,
           assigned_employees: assignedEmployees,
           attached_files: attachedFiles,
-          savedTime
+          savedTime,
         };
       }),
     );
@@ -671,19 +671,18 @@ exports.logTime = async (req, res) => {
 
   try {
     const roundedHours = Math.round(hours_spent * 3600) / 3600;
-    const [id] = await db("time_entries")
-      .insert({
+    const existing = await db("time_entries")
+      .where({
         task_id,
         employee_id: employeeId,
-        hours_spent: roundedHours,
-        date: entry_date,
       })
-      .LAST_INSERT_ID();
+      .first();
 
+    let id;
     if (existing) {
       await db("time_entries")
         .where({ id: existing.id })
-        .update({ hours_spent });
+        .update({ hours_spent: roundedHours });
 
       id = existing.id;
     } else {
@@ -691,7 +690,7 @@ exports.logTime = async (req, res) => {
         .insert({
           task_id,
           employee_id: employeeId,
-          hours_spent,
+          hours_spent: roundedHours,
           date: entry_date,
           note: notes,
         })
