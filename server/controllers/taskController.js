@@ -670,24 +670,16 @@ exports.logTime = async (req, res) => {
   }
 
   try {
-<<<<<<< HEAD
     const roundedHours = Math.round(hours_spent * 3600) / 3600;
     const [id] = await db("time_entries")
       .insert({
         task_id,
         employee_id: employeeId,
         hours_spent: roundedHours,
-=======
-    const existing = await db("time_entries")
-      .where({
-        task_id,
-        employee_id: employeeId,
->>>>>>> 0f900b50943fb2e4af561e6c9e368c8ea44385ad
         date: entry_date,
       })
-      .first();
+      .LAST_INSERT_ID();
 
-    let id;
     if (existing) {
       await db("time_entries")
         .where({ id: existing.id })
