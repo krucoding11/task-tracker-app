@@ -2,6 +2,7 @@ const db = require("../config/db");
 const { format } = require("date-fns");
 
 const getAuthorizedProjectCreatorIds = async (user) => {
+  console.log("getAuthorizedProjectCreatorIds function....................");
   // If user is Admin, they are authorized for all.
   const isAdmin =
     user.permissions && user.permissions.includes("projects:manage");
@@ -30,6 +31,8 @@ const getAuthorizedProjectCreatorIds = async (user) => {
 };
 
 exports.getTasksByEmployeeId = async (req, res) => {
+  console.log("getTasksByEmployeeId api...................");
+
   const employeeId = req.user.id;
   const user = req.user;
 
@@ -368,6 +371,8 @@ exports.getTasksByEmployeeId = async (req, res) => {
 // }
 
 exports.getTasksByProject = async (req, res) => {
+  console.log("getTasksByProject api...................");
+
   const { projectId } = req.params;
 
   try {
@@ -602,9 +607,56 @@ exports.getTasksByProject = async (req, res) => {
 //     "message": "Fetched all tasks with assigned employees and attachments"
 // }
 
+// exports.logTime = async (req, res) => {
+//   const { task_id, hours_spent, entry_date, notes } = req.body;
+//   const employeeId = req.user.id;
+//   console.log("employeeId.................", employeeId);
+//   console.log("task_id.................", task_id);
+//   console.log("hours_spent.................", hours_spent);
+//   console.log("entry_date.................", entry_date);
+//   console.log("notes.................", notes);
+
+//   if (!task_id || !hours_spent || !entry_date) {
+//     return res
+//       .status(400)
+//       .json({ message: "Task ID, hours, and date are required." });
+//   }
+
+//   try {
+//     const [id] = await db("time_entries")
+//       .insert({
+//         task_id,
+//         employee_id: employeeId,
+//         hours_spent,
+//         date: entry_date,
+//         note: notes,
+//       })
+//       .returning("id");
+//     console.log("[id]................", [id]);
+
+//     const newTimeEntry = await db("time_entries")
+//       .where({ id: id.id || id })
+//       .first();
+//     console.log("newTimeEntry...................", newTimeEntry);
+//     res.status(201).json({
+//       success: true,
+//       // data: newTimeEntry,
+//       message: "Time logged successfully.",
+//     });
+//   } catch (error) {
+//     console.error("Error logging time:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error logging time", error: error.message });
+//   }
+// };
+
 exports.logTime = async (req, res) => {
+  console.log("logTime api...................");
+
   const { task_id, hours_spent, entry_date, notes } = req.body;
   const employeeId = req.user.id;
+
   console.log("employeeId.................", employeeId);
   console.log("task_id.................", task_id);
   console.log("hours_spent.................", hours_spent);
@@ -618,32 +670,58 @@ exports.logTime = async (req, res) => {
   }
 
   try {
+<<<<<<< HEAD
     const roundedHours = Math.round(hours_spent * 3600) / 3600;
     const [id] = await db("time_entries")
       .insert({
         task_id,
         employee_id: employeeId,
         hours_spent: roundedHours,
+=======
+    const existing = await db("time_entries")
+      .where({
+        task_id,
+        employee_id: employeeId,
+>>>>>>> 0f900b50943fb2e4af561e6c9e368c8ea44385ad
         date: entry_date,
-        note: notes,
       })
-      .returning("id");
-    console.log("[id]................", [id]);
-
-    const newTimeEntry = await db("time_entries")
-      .where({ id: id.id || id })
       .first();
-    console.log("newTimeEntry...................", newTimeEntry);
-    res.status(201).json({
+
+    let id;
+    if (existing) {
+      await db("time_entries")
+        .where({ id: existing.id })
+        .update({ hours_spent });
+
+      id = existing.id;
+    } else {
+      const [inserted] = await db("time_entries")
+        .insert({
+          task_id,
+          employee_id: employeeId,
+          hours_spent,
+          date: entry_date,
+          note: notes,
+        })
+        .returning("id");
+
+      id = inserted.id || inserted;
+    }
+
+    const newTimeEntry = await db("time_entries").where({ id }).first();
+    console.log("newTimeEntry................", newTimeEntry);
+
+    return res.status(201).json({
       success: true,
       data: newTimeEntry,
       message: "Time logged successfully.",
     });
   } catch (error) {
     console.error("Error logging time:", error);
-    res
-      .status(500)
-      .json({ message: "Error logging time", error: error.message });
+    return res.status(500).json({
+      message: "Error logging time",
+      error: error.message,
+    });
   }
 };
 
@@ -664,6 +742,8 @@ exports.logTime = async (req, res) => {
 // }
 
 exports.getTimeEntriesForTask = async (req, res) => {
+  console.log("getTimeEntriesForTask api...................");
+
   const { taskId } = req.params;
   try {
     const timeEntries = await db("time_entries")

@@ -4,13 +4,15 @@ const db = require("../config/db.js");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-default-secret-key";
 console.log("JWT_SECRET...........", JWT_SECRET);
+
 exports.login = async (req, res) => {
   const { work_email, password } = req.body;
   try {
-    console.log("work_email.............", work_email);
+    console.log("login api...................");
+    // console.log("work_email.............", work_email);
     console.log("password.............", password);
     const employee = await db("employees").where({ work_email }).first();
-    console.log("employee................", employee);
+    // console.log("employee................", employee);
     if (!employee) {
       return res.status(401).json({ error: "Invalid Email-address" });
     }
@@ -49,6 +51,8 @@ exports.login = async (req, res) => {
 };
 
 const getUserInfo = (id) => {
+  console.log("getUserInfo function...................");
+
   return db("employees as e")
     .leftJoin("departments as d", "e.department_id", "d.id")
     .leftJoin("designations as des", "e.designation_id", "des.id")
@@ -77,6 +81,8 @@ const getUserInfo = (id) => {
 };
 
 exports.getMe = async (req, res) => {
+  console.log("getme api...................");
+
   try {
     const user = await getUserInfo(req.user.id);
     user.permissions = req.user?.permissions;
