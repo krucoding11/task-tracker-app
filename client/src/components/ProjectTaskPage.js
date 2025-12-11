@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TaskContext";
 import { useProject } from "../context/ProjectContext";
-import { FaCircleUser } from "react-icons/fa6";
-import { IoIosClose } from "react-icons/io";
+// import { FaCircleUser } from "react-icons/fa6";
+import { CiMenuKebab } from "react-icons/ci";
+import { useRef } from "react";
 
 export default function ProjectTaskPage() {
-  const { user, logout, authToken } = useAuth();
+  const { user, logout, authToken, getEmployeeById } = useAuth();
   const { tasks, fetchTasks, logTime, getTimeEntriesForTask } = useTasks();
   const { projects, fetchProjects } = useProject();
 
@@ -18,10 +19,24 @@ export default function ProjectTaskPage() {
   const [taskHistory, setTaskHistory] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [showUserModal, setShowUserModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [projectOwners, setProjectOwners] = useState({});
+  const [showProjectMenu, setShowProjectMenu] = useState(false);
   // const [description, setDescription] = useState("");
 
+  const userMenuRef = useRef(null);
+  const projectMenuRef = useRef(null);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (window.timer) {
+      clearInterval(window.timer);
+      window.timer = null;
+    }
+    localStorage.setItem("timer-running", "0");
+    setIsRunning(false);
+  }, []);
 
   useEffect(() => {
     if (authToken) {
@@ -31,6 +46,28 @@ export default function ProjectTaskPage() {
   }, []);
 
   useEffect(() => {
+    const loadProjectOwners = async () => {
+      if (!projects || projects.length === 0) return;
+
+      const owners = {};
+
+      for (const project of projects) {
+        // const ownerId = project.employees_id || project.user_id || project.created_by || project.owner_id || project.assigned_to || null;
+        const ownerId = project.employees_id;
+        if (ownerId) {
+          const result = await getEmployeeById(ownerId);
+          if (result.success) {
+            owners[project.id] =
+              result.data.first_name + " " + result.data.last_name;
+          }
+        }
+      }
+      setProjectOwners(owners);
+    };
+    loadProjectOwners();
+  }, [projects]);
+
+  useEffect(() => {
     if (!task) return;
 
     const saved = localStorage.getItem(`timer-${task.value}`);
@@ -38,6 +75,14 @@ export default function ProjectTaskPage() {
       setTime(Number(saved));
     } else {
       setTime(task.savedTime || 0);
+    }
+  }, [task]);
+
+  useEffect(() => {
+    if (!task) return;
+    const wasRunning = localStorage.getItem("timer-running");
+    if (wasRunning === "1") {
+      startTimer();
     }
   }, [task]);
 
@@ -52,16 +97,32 @@ export default function ProjectTaskPage() {
     }
 
     const loadEntries = async () => {
-      const entries = await getTimeEntriesForTask(task.value);
+      const entries = await getTimeEntriesForTask(task.value); // getTimeEntriesForTask - retrieves past log
       setTimeEntries(entries);
     };
 
     loadEntries();
   }, [task, getTimeEntriesForTask]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if(userMenuRef.current && !userMenuRef.current.contains(e.target)){
+        setShowUserMenu(false);
+      }
+      if(projectMenuRef.current && !projectMenuRef.current.contains(e.target)){
+        setShowProjectMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+  })
+
   const startTimer = () => {
     if (!window.timer && task) {
       setIsRunning(true);
+      setShowProjectMenu(false);
       window.timer = setInterval(() => {
         setTime((t) => {
           const newTime = t + 1;
@@ -78,6 +139,8 @@ export default function ProjectTaskPage() {
     window.timer = null;
     setIsRunning(false);
     window.electronAPI?.sendStatus("red");
+
+    localStorage.setItem("timer-running", "0");
 
     if (!task) return;
 
@@ -113,33 +176,48 @@ export default function ProjectTaskPage() {
   };
 
   const handleLogout = () => {
+    localStorage.setItem("timer-running", isRunning ? "1" : "0");
     logout();
     navigate("/");
   };
 
   const filteredTasks =
     project && project.value !== "all"
-      ? tasks.filter((t) => t.project_id === project.value)
+      ? tasks.filter((t) => Number(t.project_id) === Number(project.value))
       : tasks;
+
+  const formateTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    if (h > 0) {
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(
+        2,
+        "0"
+      )}:${String(s).padStart(2, "0")}`;
+    } else {
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+  };
 
   const taskOption = filteredTasks.map((t) => {
     const historyTask = taskHistory.find((ht) => ht.value === t.id);
     // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
     const localTime = Number(localStorage.getItem(`timer-${t.id}`));
-    const savedTime = localTime > 0 ? localTime : historyTask?.savedTime ?? t.savedTime ?? 0;
-    const formatted = `${String(Math.floor(savedTime / 60)).padStart(
-      2,
-      "0"
-    )}:${String(savedTime % 60).padStart(2, "0")}`;
+    const savedTime =
+      localTime > 0 ? localTime : historyTask?.savedTime ?? t.savedTime ?? 0;
 
     return {
       value: t.id,
       // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
       label: (
         <div className="flex justify-between w-full items-center">
-          <span>{t.title}</span>
+          <span>{t.title || "Untitled Task"}</span>
           {savedTime > 0 && (
-            <span className="text-red-500 font-semibold">{formatted}</span>
+            <span className="text-red-500 font-semibold">
+              {formateTime(savedTime)}
+            </span>
           )}
         </div>
       ),
@@ -152,13 +230,21 @@ export default function ProjectTaskPage() {
     setTask(null);
   }, [project]); // clear task when project changes
 
-  const projectOption = [
-    { value: "all", label: "All Projects" },
-    ...projects?.map((p) => ({
-      value: p.id,
-      label: p.name || p.title,
-    })),
-  ];
+  // const projectOption = [
+  //   { value: "all", label: "All Projects" },
+  //   ...projects?.map((p) => ({
+  //     value: p.id,
+  //     // label: p.name || p.title,
+  //     label: (
+  //       <div className="flex justify-between w-full items-center">
+  //         <span>{p.name || p.title}</span>
+  //         <span className="text-gray-500 text-sm">
+  //           {projectOwners[p.id] ? `- ${projectOwners[p.id]}` : ""}
+  //         </span>
+  //       </div>
+  //     ),
+  //   })),
+  // ];
 
   // const taskOption = [
   //   { value: "task1", label: "Task 1"},
@@ -183,11 +269,15 @@ export default function ProjectTaskPage() {
       backgroundColor: "white",
       marginTop: "2px",
       zIndex: 9999,
+      overflow: "hidden",
+      maxHeight: "260px",
     }),
 
     menuList: (base) => ({
       ...base,
       padding: "0",
+      maxHeight: "144px",
+      overflowY: "auto",
     }),
 
     option: (base, state) => ({
@@ -215,76 +305,79 @@ export default function ProjectTaskPage() {
     }),
   };
 
+  const getInitials = (user) => {
+    if (!user) return "";
+    const first = user.first_name?.charAt(0) || "";
+    const last = user.last_name?.charAt(0) || "";
+    return (first + last).toUpperCase();
+  };
+
   return (
-    <div className="max-w-md mx-auto px-1 py-2 space-y-4 font-sans bg-white mt-2 mb-2">
+    <div className="max-w-md mx-auto px-4 py-2 space-y-5 font-sans bg-white mt-2 mb-2 overflow-visible">
       {/* Header */}
       <div className="flex justify-between items-center mt-1">
-        {/* <span className="font-semibold">{user?.work_email}</span> */}
-        <button
-          onClick={() => setShowUserModal(true)}
-          className="font-semibold"
-        >
-          <FaCircleUser className="text-[30px]" />
-        </button>
-
-        {/* ************** user modal ************* */}
-        {showUserModal && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-            onClick={() => setShowUserModal(false)}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu((prev) => !prev)}
+            className="w-10 h-10 flex items-center justify-center bg-gray-300 text-gray-700 font-semibold rounded-full cursor-pointer select-none"
           >
-            <div 
-              className="bg-white p-6 rounded-lg shadow-lg w-[300px] text-center relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="absolute right-3 top-3 text-gray-600 hover:text-gray-800 text-xl"
-              >
-                <IoIosClose />
-              </button>
-              <h2 className="text-lg font-semibold">User Details:</h2>
-              <div className="text-gray-700 flex justify-center gap-2 mt-2">
-                <strong>Email:</strong>
-                <span>{user?.work_email || "No email"}</span>
+            {getInitials(user)}
+            {/* {user?.profile_picture_url ? (
+              <img
+                src={`${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`}
+                alt={user.first_name}
+                className="w-10 h-10 rounded-full object-cover border border-gray-300"
+              />
+            ) : (
+              <FaCircleUser className="text-[30px]" />
+            )} */}
+            {/* <FaCircleUser className="text-[30px] cursor-pointer" /> */}
+          </button>
+          {showUserMenu && (
+            <div className="fixed top-12 left-1 w-40 bg-white shadow-lg rounded-md border z-50">
+              <div className="px-2 py-2 text-sm text-gray-700 border-b">
+                {user?.work_email || "No email"}
               </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-2 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                Logout
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold font-mono w-[70px] text-center">
-          {String(Math.floor(time / 60)).padStart(2, "0")}:
-          {String(Math.floor(time % 60)).padStart(2, "0")}
-        </h2>
+          <h2
+            className={`text-xl font-bold font-mono w-[70px] text-center ${
+              time >= 3600 ? "mr-7" : "mr-1"
+            }`}
+          >
+            {formateTime(time)}
+          </h2>
 
-        <button
-          onClick={() => (isRunning ? stopTimer() : startTimer())}
-          disabled={!task}
-          className={`px-4 py-1 rounded text-white font-semibold ${
-            !task
-              ? "bg-gray-300"
-              : isRunning
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-green-500 hover:bg-green-600"
-          }`}
-        >
-          {isRunning ? "Stop" : "Start"}
-        </button>
+          <button
+            onClick={() => (isRunning ? stopTimer() : startTimer())}
+            disabled={!task}
+            className={`px-4 py-1 rounded text-white font-semibold ${
+              !task
+                ? "bg-gray-300"
+                : isRunning
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-700 hover:bg-green-800"
+            }`}
+          >
+            {isRunning ? "Stop" : "Start"}
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition duration-150 ease-in-out"
-        >
-          Logout
-        </button>
       </div>
 
       {/* project */}
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Select Project: </span>
+      {/* <div className="flex flex-col gap-1"> */}
+      {/* <span className="text-sm font-medium">Select Project: </span> */}
 
-        <Select
+      {/* <Select
           options={projectOption}
           value={project}
           onChange={setProject}
@@ -294,21 +387,76 @@ export default function ProjectTaskPage() {
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
+          menuPlacement="bottom"
           isDisabled={isRunning}
-        />
-        {/* </div> */}
-        {/* <button
-            onClick={() => setProject({ value: "all", label: "All projects"})}
-            className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
-          >
-            All
-          </button> */}
-        {/* </div> */}
-      </div>
+        /> */}
+
+      {/* </div> */}
 
       {/* task selector */}
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Select Task:</span>
+        {/* Row: Label + Menu Icon */}
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Select Task:</span>
+
+          <div className="flex items-center gap-2 relative" ref={projectMenuRef}>
+            {project && (
+              <span className="text-sm font-semibold text-gray-600">
+                {project.label}
+              </span>
+            )}
+            <button
+              onClick={() => {
+                if (!isRunning) setShowProjectMenu((prev) => !prev);
+              }}
+              disabled={isRunning}
+              className={`p-2 border rounded ${
+                isRunning
+                  ? "bg-gray-200 cursor-not-allowed opacity-50"
+                  : "hover:bg-gray-200"
+              }`}
+            >
+              <CiMenuKebab className="text-2xl" />
+            </button>
+
+            {showProjectMenu && (
+              <div className="absolute right-0 top-full mt-1 w-56 bg-white border shadow-lg rounded-md z-50 max-h-60 overflow-y-auto">
+                <button
+                  onClick={() => {
+                    setProject({ value: "all", label: "All Projects" });
+                    setShowProjectMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
+                >
+                  <span>All Projects</span>
+                </button>
+                {projects.length === 0 ? (
+                  <p className="p-2 text-sm text-gray-500">No project found</p>
+                ) : (
+                  projects.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setProject({ value: p.id, label: p.name || p.title });
+                        setShowProjectMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
+                    >
+                      <span>{p.name || p.title}</span>
+                      {projectOwners[p.id] && (
+                        <span className="text-gray-400 text-xs">
+                          {projectOwners[p.id]}
+                        </span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Task dropdown under the row */}
         <Select
           options={taskOption}
           value={task}
@@ -319,14 +467,15 @@ export default function ProjectTaskPage() {
           menuPortalTarget={document.body}
           styles={customStyles}
           classNamePrefix="react-select"
+          menuPlacement="bottom"
           isDisabled={isRunning || !project}
         />
       </div>
 
       {/* timer */}
       {/* <div className="flex items-center gap-4"> */}
-    
-        {/* <button
+
+      {/* <button
           onClick={startTimer}
           disabled={!task}
           className={`px-3 py-1 rounded text-white ${
@@ -373,6 +522,17 @@ export default function ProjectTaskPage() {
         ) : (
           <p className="text-gray-400 text-sm mt-2">No task selected</p>
         )}
+      </div>
+
+      <div className="relative cursor-pointer">
+        <a
+          href="https://hrms.edeltacorp.com/my-tasks"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-4 right-5 text-blue-600 font-medium hover:underline"
+        >
+          For More Information...
+        </a>
       </div>
     </div>
   );
