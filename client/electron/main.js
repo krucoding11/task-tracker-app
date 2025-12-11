@@ -18,7 +18,7 @@ let tray = null;
 let win = null;
 let keepAliveWin = null;
 const winWidth = 400;
-const winHeight = 400;
+const winHeight = 370;
 
 function resourcePath(file) {
   return app.isPackaged

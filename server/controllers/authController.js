@@ -112,11 +112,13 @@ exports.getEmployeeById = async (req, res) => {
   try {
     const { id } = req.params;
     const employee = await db("employees").where({ id }).first(); // .first() gets the object itself, not an array
+    console.log(employee)
     if (!employee) {
       return res
         .status(404)
         .json({ success: false, error: "Employee not found" });
     }
+
     res.status(200).json({ success: true, data: employee });
   } catch (error) {
     res

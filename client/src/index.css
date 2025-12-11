@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.react-select__menu {
+  position: fixed !important;
+  z-index: 999999 !important;
+  left: 0 !important;
+  top: auto !important;
+}
+
+/* Prevent shrinking inside small electron window */
+.react-select__menu-list {
+  max-height: 200px !important; 
+  overflow-y: auto !important;
+}

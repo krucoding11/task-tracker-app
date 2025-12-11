@@ -52,6 +52,25 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const getEmployeeById = async (id) => {
+        try {
+            const response = await axios.get(`${API_URL}/api/auth/${id}`);
+            return { success: true, data: response.data.data};
+        } catch (error) {
+            const errorMessage = error.response?.data?.error || 'Failed to fetch Employee details';
+            return { success: false, error: errorMessage};
+        }
+    }
+
+    // const uploadProfilePic = async (file) => {
+    //     const form = new FormData();
+    //     form.append("image", file);
+
+    //     const res = await axios.post(`${API_URL}/api/auth/upload-profile`, form, { headers: {"Content-Type": "multipart/form-data"}});
+    //     return res.data;
+    // }
+
+
     const logout = async () => {
         setAuthToken(null);
         localStorage.removeItem("authToken");
@@ -63,6 +82,7 @@ export const AuthProvider = ({ children }) => {
         authToken,
         loading,
         login,
+        getEmployeeById,
         logout
     };
 
