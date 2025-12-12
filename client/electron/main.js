@@ -12,6 +12,10 @@ const {
 const path = require("path");
 const waitPort = require("wait-port");
 
+// build code start
+const { spawn } = require("child_process");
+// build code ends
+
 let forceQuit = false;
 
 const platform = process.platform;
@@ -96,13 +100,36 @@ async function createWindow() {
     await waitPort({ host: "localhost", port: 5173 });
     win.loadURL("http://localhost:5173");
   } else {
-    win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
+    // win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
+    win.loadFile(path.join(process.resourcesPath, "build/index.html"));
   }
 
   win.hide();
 }
 
+// // build code start
+// let serverProcess;
+
+// function startServer() {
+//   const serverPath = app.isPackaged
+//     ? path.join(process.resourcesPath, "server", "main.js")
+//     : path.join(__dirname, "../../server/main.js");
+
+//   serverProcess = spawn("node", [serverPath], {
+//     stdio: "inherit",
+//     shell: false,
+//   });
+
+//   serverProcess.on("error", (err) => {
+//     console.error("Failed to start server:", err);
+//   });
+// }
+// // build code ends
+
 app.whenReady().then(async () => {
+  // //build code start
+  // startServer();
+  // //build code end
   createKeepAliveWindow();
   await createWindow();
 
@@ -268,3 +295,9 @@ app.whenReady().then(async () => {
 //   }) 
 
 });
+
+// build code start
+app.on("quit", () => {
+  if (serverProcess) serverProcess.kill();
+});
+//build code end
