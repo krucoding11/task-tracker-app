@@ -27,7 +27,8 @@
     "react-start": "PORT=3001 BROWSER=none react-scripts start",
     "electron-start": "electron .",
     "start": "concurrently --kill-others --success=exit-first \"npm run react-start\" \"npm run electron-start\"",
-    "dist": "electron-builder"
+    "build": "react-scripts build",
+    "dist": "electron-builder --mac"
   },
   "eslintConfig": {
     "extends": [
@@ -36,9 +37,22 @@
     ]
   },
   "build": {
-    "appId": "com.taskapp.electron",
+    "extends": null,
+    "appId": "com.task.tracker",
     "mac": {
-      "category": "public.app-category.productivity"
+      "target": "dmg"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "server/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "server/**"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
     }
   },
   "browserslist": {
