@@ -4,3 +4,4 @@ package-lock.json
 server/node_modules
 client/node_modules
 client/dist
+client/build/
