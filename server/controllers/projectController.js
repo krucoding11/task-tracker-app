@@ -5,7 +5,7 @@ exports.getAllProjects = async (req, res) => {
     console.log("getAllProjects api...................");
 
     const projects = await db("projects").select("*");
-
+    console.log("projects", projects);
     const projectsWithDetails = await Promise.all(
       projects.map(async (project) => {
         const tasks = await db("tasks").where({ project_id: project.id });
@@ -21,6 +21,7 @@ exports.getAllProjects = async (req, res) => {
               "CONCAT(employees.first_name, ' ', employees.last_name) AS full_name",
             ),
           );
+        console.log("assignedEmployeesRaw: ", assignedEmployeesRaw);
 
         const uniqueEmployeesMap = new Map();
         assignedEmployeesRaw.forEach((emp) => {
@@ -28,13 +29,16 @@ exports.getAllProjects = async (req, res) => {
             uniqueEmployeesMap.set(emp.id, emp);
           }
         });
+        console.log("uniqueEmployeesMap: ", uniqueEmployeesMap);
         const assignedEmployees = Array.from(uniqueEmployeesMap.values());
+        console.log("assignedEmployees: ", assignedEmployees);
 
         const latestDueDate = tasks
           .map((t) => t.due_date)
           .filter(Boolean)
           .sort((a, b) => new Date(b) - new Date(a))[0];
 
+        console.log("latestDueDate: ", latestDueDate);
         let attachedFiles = [];
         if (project.attachment_ids && project.attachment_ids.length > 0) {
           attachedFiles = await db("attachments")
@@ -51,6 +55,7 @@ exports.getAllProjects = async (req, res) => {
         };
       }),
     );
+    console.log(projectsWithDetails);
 
     res.status(200).json({
       success: true,

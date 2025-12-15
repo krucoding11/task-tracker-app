@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from './AuthContext';
 import axios from 'axios';
 
@@ -35,6 +35,12 @@ export const ProjectProvider = ({ children }) => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if(authToken){
+            fetchProjects();
+        }
+    },[authToken]);
 
   return (
     <ProjectContext.Provider value={{ projects, meta, loading, error, fetchProjects}}>

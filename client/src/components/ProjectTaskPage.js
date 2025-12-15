@@ -9,7 +9,7 @@ import { CiMenuKebab } from "react-icons/ci";
 import { useRef } from "react";
 
 export default function ProjectTaskPage() {
-  const { user, logout, authToken, getEmployeeById } = useAuth();
+  const { user, logout, authToken } = useAuth();
   const { tasks, fetchTasks, logTime, getTimeEntriesForTask } = useTasks();
   const { projects, fetchProjects } = useProject();
 
@@ -20,12 +20,15 @@ export default function ProjectTaskPage() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [projectOwners, setProjectOwners] = useState({});
+  // const [projectOwners, setProjectOwners] = useState({});
   const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [underSelectedProject, setUnderSelectedProject] = useState(false);
+  const [taskMenuWidth, setTaskMenuWidth] = useState(0);
   // const [description, setDescription] = useState("");
 
   const userMenuRef = useRef(null);
   const projectMenuRef = useRef(null);
+  const taskContainerRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -46,26 +49,8 @@ export default function ProjectTaskPage() {
   }, []);
 
   useEffect(() => {
-    const loadProjectOwners = async () => {
-      if (!projects || projects.length === 0) return;
-
-      const owners = {};
-
-      for (const project of projects) {
-        // const ownerId = project.employees_id || project.user_id || project.created_by || project.owner_id || project.assigned_to || null;
-        const ownerId = project.employees_id;
-        if (ownerId) {
-          const result = await getEmployeeById(ownerId);
-          if (result.success) {
-            owners[project.id] =
-              result.data.first_name + " " + result.data.last_name;
-          }
-        }
-      }
-      setProjectOwners(owners);
-    };
-    loadProjectOwners();
-  }, [projects]);
+    setProject({ value: "all", label: "All Projects" });
+  }, []);
 
   useEffect(() => {
     if (!task) return;
@@ -90,6 +75,17 @@ export default function ProjectTaskPage() {
     return () => clearInterval(window.timer);
   }, []);
 
+ useEffect(() => {
+  const updateWidth = () => {
+    if (taskContainerRef.current) {
+      setTaskMenuWidth(taskContainerRef.current.offsetWidth);
+    }
+  };
+  updateWidth(); // initial measurement
+  window.addEventListener("resize", updateWidth);
+  return () => window.removeEventListener("resize", updateWidth);
+}, []);
+
   useEffect(() => {
     if (!task) {
       setTimeEntries([]);
@@ -106,18 +102,21 @@ export default function ProjectTaskPage() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if(userMenuRef.current && !userMenuRef.current.contains(e.target)){
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowUserMenu(false);
       }
-      if(projectMenuRef.current && !projectMenuRef.current.contains(e.target)){
+      if (
+        projectMenuRef.current &&
+        !projectMenuRef.current.contains(e.target)
+      ) {
         setShowProjectMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-    }
-  })
+    };
+  });
 
   const startTimer = () => {
     if (!window.timer && task) {
@@ -176,6 +175,7 @@ export default function ProjectTaskPage() {
   };
 
   const handleLogout = () => {
+    // localStorage.removeItem("hrms_last_user");
     localStorage.setItem("timer-running", isRunning ? "1" : "0");
     logout();
     navigate("/");
@@ -211,16 +211,7 @@ export default function ProjectTaskPage() {
     return {
       value: t.id,
       // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
-      label: (
-        <div className="flex justify-between w-full items-center">
-          <span>{t.title || "Untitled Task"}</span>
-          {savedTime > 0 && (
-            <span className="text-red-500 font-semibold">
-              {formateTime(savedTime)}
-            </span>
-          )}
-        </div>
-      ),
+      label: t.title || "Untitled Task",
       savedTime,
       description: t.description,
     };
@@ -252,36 +243,39 @@ export default function ProjectTaskPage() {
   // ];
 
   const customStyles = {
+    container: (base) => ({
+      ...base,
+      width: "100%", // make container full width
+    }),
     control: (base, state) => ({
       ...base,
+      width: "100%",
       borderRadius: "8px",
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
       boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
-      padding: "2px",
       minHeight: "42px",
       fontSize: "14px",
     }),
-
     menu: (base) => ({
       ...base,
-      borderRadius: "8px",
-      padding: "4px",
-      backgroundColor: "white",
-      marginTop: "2px",
-      zIndex: 9999,
-      overflow: "hidden",
-      maxHeight: "260px",
+      width: "100%", // set dropdown menu width same as input
     }),
-
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+      width: "auto", // or "100%" if needed
+    }),
     menuList: (base) => ({
       ...base,
-      padding: "0",
-      maxHeight: "144px",
+      padding: 0,
+      maxHeight: "180px",
       overflowY: "auto",
     }),
-
     option: (base, state) => ({
       ...base,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
       padding: "10px 12px",
       fontSize: "14px",
       backgroundColor: state.isSelected
@@ -291,18 +285,6 @@ export default function ProjectTaskPage() {
         : "white",
       color: "#111827",
     }),
-
-    input: (base) => ({
-      ...base,
-      margin: 0,
-      padding: 0,
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      fontSize: "14px",
-      color: "#9ca3af",
-    }),
   };
 
   const getInitials = (user) => {
@@ -310,6 +292,29 @@ export default function ProjectTaskPage() {
     const first = user.first_name?.charAt(0) || "";
     const last = user.last_name?.charAt(0) || "";
     return (first + last).toUpperCase();
+  };
+
+  const openHRMSLink = async () => {
+    const currentUserId = user?.work_email || user?.id || user?.username;
+
+    const lastHRMSUser = localStorage.getItem("hrms_last_user");
+
+    let targetURL = "https://hrms.edeltacorp.com/login";
+
+    if (lastHRMSUser && lastHRMSUser === currentUserId) {
+      targetURL = "https://hrms.edeltacorp.com/my-tasks";
+    }
+    localStorage.setItem("hrms_last_user", currentUserId);
+
+    if (window?.electronAPI?.hideWindow) {
+      await window.electronAPI.hideWindow();
+    }
+
+    if (window?.electronAPI?.openExternal) {
+      window.electronAPI.openExternal(targetURL);
+    } else {
+      window.open(targetURL, "_blank", "noopener, noreferrer");
+    }
   };
 
   return (
@@ -323,18 +328,18 @@ export default function ProjectTaskPage() {
           >
             {getInitials(user)}
             {/* {user?.profile_picture_url ? (
-              <img
-                src={`${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`}
-                alt={user.first_name}
-                className="w-10 h-10 rounded-full object-cover border border-gray-300"
-              />
-            ) : (
-              <FaCircleUser className="text-[30px]" />
-            )} */}
+                <img
+                  src={`${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`}
+                  alt={user.first_name}
+                  className="w-10 h-10 rounded-full object-cover border border-gray-300"
+                />
+              ) : (
+                <FaCircleUser className="text-[30px]" />
+              )} */}
             {/* <FaCircleUser className="text-[30px] cursor-pointer" /> */}
           </button>
           {showUserMenu && (
-            <div className="fixed top-12 left-1 w-40 bg-white shadow-lg rounded-md border z-50">
+            <div className="absolute left-0 top-full mt-1 w-45 bg-white border shadow-lg rounded-md z-50 max-h-60 overflow-y-auto">
               <div className="px-2 py-2 text-sm text-gray-700 border-b">
                 {user?.work_email || "No email"}
               </div>
@@ -378,18 +383,18 @@ export default function ProjectTaskPage() {
       {/* <span className="text-sm font-medium">Select Project: </span> */}
 
       {/* <Select
-          options={projectOption}
-          value={project}
-          onChange={setProject}
-          placeholder="Select project"
-          isSearchable
-          menuPosition="fixed"
-          menuPortalTarget={document.body}
-          styles={customStyles}
-          classNamePrefix="react-select"
-          menuPlacement="bottom"
-          isDisabled={isRunning}
-        /> */}
+            options={projectOption}
+            value={project}
+            onChange={setProject}
+            placeholder="Select project"
+            isSearchable
+            menuPosition="fixed"
+            menuPortalTarget={document.body}
+            styles={customStyles}
+            classNamePrefix="react-select"
+            menuPlacement="bottom"
+            isDisabled={isRunning}
+          /> */}
 
       {/* </div> */}
 
@@ -399,12 +404,13 @@ export default function ProjectTaskPage() {
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Select Task:</span>
 
-          <div className="flex items-center gap-2 relative" ref={projectMenuRef}>
-            {project && (
-              <span className="text-sm font-semibold text-gray-600">
-                {project.label}
-              </span>
-            )}
+          <div
+            className="flex items-center gap-2 relative"
+            ref={projectMenuRef}
+          >
+            <span className="text-sm font-semibold text-gray-600">
+              {project?.label || "All Projects"}
+            </span>
             <button
               onClick={() => {
                 if (!isRunning) setShowProjectMenu((prev) => !prev);
@@ -421,34 +427,49 @@ export default function ProjectTaskPage() {
 
             {showProjectMenu && (
               <div className="absolute right-0 top-full mt-1 w-56 bg-white border shadow-lg rounded-md z-50 max-h-60 overflow-y-auto">
-                <button
-                  onClick={() => {
-                    setProject({ value: "all", label: "All Projects" });
-                    setShowProjectMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
-                >
-                  <span>All Projects</span>
-                </button>
-                {projects.length === 0 ? (
-                  <p className="p-2 text-sm text-gray-500">No project found</p>
-                ) : (
-                  projects.map((p) => (
+                {underSelectedProject && (
+                  <div>
                     <button
-                      key={p.id}
                       onClick={() => {
-                        setProject({ value: p.id, label: p.name || p.title });
+                        setProject({ value: "all", label: "All Projects" });
                         setShowProjectMenu(false);
                       }}
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
                     >
-                      <span>{p.name || p.title}</span>
-                      {projectOwners[p.id] && (
-                        <span className="text-gray-400 text-xs">
-                          {projectOwners[p.id]}
-                        </span>
-                      )}
+                      <span>All Projects</span>
                     </button>
+
+                    {/* Divider under All Projects */}
+                    <div className="border-b border-gray-200"></div>
+                  </div>
+                )}
+
+                {projects.length === 0 ? (
+                  <p className="p-2 text-sm text-gray-500">No project found</p>
+                ) : (
+                  projects.map((p, index) => (
+                    <div key={p.id}>
+                      <button
+                        onClick={() => {
+                          setUnderSelectedProject(true);
+                          setProject({ value: p.id, label: p.name || p.title });
+                          setShowProjectMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                      >
+                        <div className="flex w-full justify-between items-center">
+                          <span>{p.name || p.title}</span>
+                          <span className="text-gray-500 text-xs">
+                            {p.creator?.first_name} {p.creator?.last_name}
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Divider between project items (except last) */}
+                      {index !== projects.length - 1 && (
+                        <div className="border-b border-gray-200"></div>
+                      )}
+                    </div>
                   ))
                 )}
               </div>
@@ -457,58 +478,76 @@ export default function ProjectTaskPage() {
         </div>
 
         {/* Task dropdown under the row */}
-        <Select
-          options={taskOption}
-          value={task}
-          onChange={(selected) => setTask(selected)}
-          placeholder={project ? "Select task" : "Select project first"}
-          isSearchable
-          menuPosition="fixed"
-          menuPortalTarget={document.body}
-          styles={customStyles}
-          classNamePrefix="react-select"
-          menuPlacement="bottom"
-          isDisabled={isRunning || !project}
-        />
+        <div ref={taskContainerRef} className="w-full">
+          <Select
+            options={taskOption}
+            value={task}
+            onChange={setTask}
+            placeholder={project ? "Select task" : "Select project first"}
+            isSearchable
+            menuPlacement="bottom"
+            menuPosition="fixed" // important
+            menuPortalTarget={document.body}
+            classNamePrefix="react-select"
+            isDisabled={isRunning || !project}
+            styles={{
+              ...customStyles,
+              menuPortal: (base) => ({
+                ...base,
+                width: taskMenuWidth,
+                zIndex: 9999,
+              }),
+              menu: (base) => ({ ...base, width: taskMenuWidth }),
+            }}
+          />
+        </div>
       </div>
 
       {/* timer */}
       {/* <div className="flex items-center gap-4"> */}
 
       {/* <button
-          onClick={startTimer}
-          disabled={!task}
-          className={`px-3 py-1 rounded text-white ${
-            !task
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-green-500 hover:bg-green-600"
-          } `}
-        >
-          Start
-        </button>
-        <button
-          onClick={stopTimer}
-          disabled={!task}
-          className={`px-3 py-1 rounded text-white ${
-            !task
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-red-500 hover:bg-red-600"
-          } `}
-        >
-          Stop
-        </button> */}
+            onClick={startTimer}
+            disabled={!task}
+            className={`px-3 py-1 rounded text-white ${
+              !task
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600"
+            } `}
+          >
+            Start
+          </button>
+          <button
+            onClick={stopTimer}
+            disabled={!task}
+            className={`px-3 py-1 rounded text-white ${
+              !task
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-red-500 hover:bg-red-600"
+            } `}
+          >
+            Stop
+          </button> */}
       {/* </div> */}
 
       {/* description */}
       {/* <textarea
-        className="w-full border p-2 rounded-md"
-        rows="4"
-        placeholder="Task description..."
-        value={description} 
-        onChange={(e) => setDescription(e.target.value)}
-      /> */}
+          className="w-full border p-2 rounded-md"
+          rows="4"
+          placeholder="Task description..."
+          value={description} 
+          onChange={(e) => setDescription(e.target.value)}
+        /> */}
       <div className="mt-4">
-        <strong>Description:</strong>
+        <div className="flex justify-between items-center">
+          <strong>Description:</strong>
+          <span
+            onClick={openHRMSLink}
+            className="text-blue-600 font-medium hover:underline cursor-pointer"
+          >
+            For More Information...
+          </span>
+        </div>
         {task ? (
           <div className="p-3 mt-2 border rounded-md bg-gray-50 text-sm text-gray-700">
             {/* <p className="mt-1">{task.description || "No Description available"}</p> */}
@@ -524,16 +563,14 @@ export default function ProjectTaskPage() {
         )}
       </div>
 
-      <div className="relative cursor-pointer">
-        <a
-          href="https://hrms.edeltacorp.com/my-tasks"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-4 right-5 text-blue-600 font-medium hover:underline"
-        >
-          For More Information...
-        </a>
-      </div>
+      {/* <a
+            href="https://hrms.edeltacorp.com/my-tasks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-4 right-5 text-blue-600 font-medium hover:underline"
+          >
+            For More Information...
+          </a> */}
     </div>
   );
 }

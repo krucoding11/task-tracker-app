@@ -4,10 +4,14 @@ directories:
 files:
   - filter:
       - build/**/*
+      - build/**/*
+      - electron/**/*
+      - package.json
 extraMetadata:
   main: build/electron.js
 appId: com.taskapp.electron
 mac:
   category: public.app-category.productivity
+  target: dmg
 extends: react-cra
-electronVersion: 39.2.4
+electronVersion: 39.2.6

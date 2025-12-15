@@ -6,6 +6,8 @@ const {
   nativeImage,
   screen,
   ipcMain,
+  globalShortcut,
+  shell
 } = require("electron");
 const path = require("path");
 const waitPort = require("wait-port");
@@ -85,8 +87,8 @@ async function createWindow() {
   });
 
   if (!app.isPackaged) {
-    await waitPort({ host: "localhost", port: 3001 });
-    win.loadURL("http://localhost:3001");
+    await waitPort({ host: "localhost", port: 5173 });
+    win.loadURL("http://localhost:5173");
   } else {
     win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
   }
@@ -99,9 +101,9 @@ app.whenReady().then(async () => {
   await createWindow();
 
   // open devTools
-  // globalShortcut.register("CommandOrControl+Shift+I", () => {
-  //   win.webContents.toggleDevTools();
-  // });
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+    win.webContents.toggleDevTools();
+  });
 
   // Load icon safely with nativeImage
   const iconPath = path.join(
@@ -234,6 +236,10 @@ app.whenReady().then(async () => {
     // tray.setImage(img);
   });
 
+  ipcMain.handle("open-external", async (_, url) => {
+    await shell.openExternal(url);
+  })
+
   setInterval(() => {
     if (
       win &&
@@ -245,6 +251,11 @@ app.whenReady().then(async () => {
     }
   }, 10000);
 
+  ipcMain.handle("hide-window", () => {
+    if(win && !win.isDestroyed()){
+      win.hide();
+    }
+  });
   // hide popup when clicking outside
   // win.on("blur", () => {
   //   if(win.isVisible()){

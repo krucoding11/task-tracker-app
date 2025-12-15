@@ -3,6 +3,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-default-secret-key";
 
 const protect = (req, res, next) => {
   let token;
+  console.log('token: of hasti', token);
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -24,15 +25,18 @@ const protect = (req, res, next) => {
 const decodeToken = (token) => jwt.verify(token, JWT_SECRET);
 
 const authorize = (...requiredPermission) => {
+  console.log('requiredPermission: ', requiredPermission);
   return (req, res, next) => {
     const requiredPermissions = Array.isArray(requiredPermission)
       ? requiredPermission
       : [requiredPermission];
 
     const userPermissions = req.user?.permissions || [];
+    console.log('userPermissions: ', userPermissions);
     const hasPermission = requiredPermissions.some((perm) =>
       userPermissions.includes(perm),
-    );
+  );
+  console.log('hasPermission: ', hasPermission);
     if (!hasPermission) {
       return res.status(403).json({
         error: "Access Denied: You do not have the required permission.",
