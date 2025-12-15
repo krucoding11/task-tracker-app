@@ -25,10 +25,9 @@
   },
   "scripts": {
     "react-start": "PORT=5173 react-scripts start",
-    "build": "react-scripts build",
     "electron-start": "electron .",
     "start": "concurrently --kill-others --success=exit-first \"npm run react-start\" \"npm run electron-start\"",
-    "dist": "npm run build && electron-builder"
+    "dist": "electron-builder"
   },
   "eslintConfig": {
     "extends": [
