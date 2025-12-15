@@ -6,92 +6,89 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [authToken, setAuthToken] = useState(localStorage.getItem("authToken") || null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authToken, setAuthToken] = useState(
+    localStorage.getItem("authToken") || null
+  );
 
-    useEffect(() => {
-        if(authToken){
-            axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-            localStorage.setItem('authToken', authToken);
-            getMe();
-        }else{
-            delete axios.defaults.headers.common['Authorization'];
-            localStorage.removeItem('authToken');
-            setUser(null);
-            setLoading(false);
-        }
-    },[authToken]);
+  useEffect(() => {
+    if (authToken) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+      localStorage.setItem("authToken", authToken);
+      getMe();
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+      localStorage.removeItem("authToken");
+      setUser(null);
+      setLoading(false);
+    }
+  }, [authToken]);
 
-    const getMe = async ()=>{
-        try {
-            const response = await axios.get(`${API_URL}/api/auth/me`);
-            setUser(response.data.data);
-        } catch (error) {
-            console.error("logging out", error);
-            setAuthToken(null);
-        } finally{
-            setLoading(false);
-        }
-    };
+  const getMe = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/me`);
+      setUser(response.data.data);
+    } catch (error) {
+      console.error("logging out", error);
+      setAuthToken(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const login = async (work_email, password) => {
-  try {
-    setLoading(true);
+  const login = async (work_email, password) => {
+    try {
+      setLoading(true);
 
-    const response = await axios.post(
-      `${API_URL}/api/auth/login`,
-      { work_email, password }
-    );
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
+        work_email,
+        password,
+      });
 
-    const { token, user: userData } = response.data;
+      const { token, user: userData } = response.data;
 
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    setAuthToken(token);
-    setUser(userData);
-    localStorage.setItem("authToken", token);
+      setAuthToken(token);
+      setUser(userData);
+      localStorage.setItem("authToken", token);
 
-    setLoading(false);
-    return { success: true };
-  } catch (error) {
-    setLoading(false);
-    const errorMessage =
-      error.response?.data?.error || "Login failed due to server error";
-    return { success: false, error: errorMessage };
-  }
-};
+      setLoading(false);
+      return { success: true };
+    } catch (error) {
+      setLoading(false);
+      const errorMessage =
+        error.response?.data?.error || "Login failed due to server error";
+      return { success: false, error: errorMessage };
+    }
+  };
 
+  // const getEmployeeById = async (id) => {
+  //     try {
+  //         const response = await axios.get(`${API_URL}/api/auth/${id}`);
+  //         return { success: true, data: response.data.data};
+  //     } catch (error) {
+  //         const errorMessage = error.response?.data?.error || 'Failed to fetch Employee details';
+  //         return { success: false, error: errorMessage};
+  //     }
+  // }
 
-    // const getEmployeeById = async (id) => {
-    //     try {
-    //         const response = await axios.get(`${API_URL}/api/auth/${id}`);
-    //         return { success: true, data: response.data.data};
-    //     } catch (error) {
-    //         const errorMessage = error.response?.data?.error || 'Failed to fetch Employee details';
-    //         return { success: false, error: errorMessage};
-    //     }
-    // }
+  const logout = async () => {
+    setAuthToken(null);
+    localStorage.removeItem("authToken");
+    setUser(null);
+  };
 
-    const logout = async () => {
-        setAuthToken(null);
-        localStorage.removeItem("authToken");
-        setUser(null);
-    };
+  const value = {
+    user,
+    authToken,
+    loading,
+    login,
+    logout,
+  };
 
-    const value = {
-        user,
-        authToken,
-        loading,
-        login,
-        logout
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // --- Custom Hook to use the Auth Context ---
@@ -114,7 +111,6 @@ export const useAuth = () => {
 //           blurInputOnSelect={false}
 //           controlShouldRenderValue
 //         />
-
 
 // exports.getTasksByEmployeeId = async (req, res) => {
 //   const employeeId = req.user.id;
@@ -220,23 +216,23 @@ export const useAuth = () => {
 //      OFFSET ?
 //    `;
 
-    // const dataQuery = `
-    //   SELECT
-    //     t.id, t.title, t.description, t.due_date, t.status, t.priority,
-    //     t.creator_id, t.project_id, p.name AS project_name,
-    //     (
-    //       SELECT json_agg(json_build_object('first_name', e.first_name, 'last_name', e.last_name, 'profile_picture_url', e.profile_picture_url, 'id', e.id))
-    //       FROM task_assignees ta
-    //       JOIN employees e ON e.id = ta.employee_id
-    //       WHERE ta.task_id = t.id
-    //     ) AS assigned_employees
-    //   FROM tasks t
-    //   LEFT JOIN projects p ON p.id = t.project_id
-    //   ${whereClause}
-    //   ORDER BY t.due_date ASC
-    //   LIMIT ?
-    //   OFFSET ?
-    // `;
+// const dataQuery = `
+//   SELECT
+//     t.id, t.title, t.description, t.due_date, t.status, t.priority,
+//     t.creator_id, t.project_id, p.name AS project_name,
+//     (
+//       SELECT json_agg(json_build_object('first_name', e.first_name, 'last_name', e.last_name, 'profile_picture_url', e.profile_picture_url, 'id', e.id))
+//       FROM task_assignees ta
+//       JOIN employees e ON e.id = ta.employee_id
+//       WHERE ta.task_id = t.id
+//     ) AS assigned_employees
+//   FROM tasks t
+//   LEFT JOIN projects p ON p.id = t.project_id
+//   ${whereClause}
+//   ORDER BY t.due_date ASC
+//   LIMIT ?
+//   OFFSET ?
+// `;
 
 //     const finalBindings = [...bindings, limitNumber, offset];
 //     const result = await db.raw(dataQuery, finalBindings);

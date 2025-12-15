@@ -28,7 +28,6 @@
     "react-start": "PORT=5173 BROWSER=none react-scripts start",
     "electron-start": "electron .",
     "start": "concurrently --kill-others --success=exit-first \"npm run react-start\" \"npm run electron-start\"",
-    "build": "react-scripts build",
     "dist": "electron-builder --mac"
   },
   "eslintConfig": {
@@ -55,10 +54,7 @@
     ],
     "asarUnpack": [
       "server/**"
-    ],
-    "extraMetadata": {
-      "main": "electron/main.js"
-    }
+    ]
   },
   "browserslist": {
     "production": [

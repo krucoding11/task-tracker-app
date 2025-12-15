@@ -55,18 +55,13 @@ export default function ProjectTaskPage() {
     setProject({ value: "all", label: "All Projects" });
   }, []);
 
-  // useEffect(() => {
-  //   if (!task || !user) return;
+  useEffect(() => {
+    if (!task || !user) return;
 
-  //   const key = `timer-${user.id}-${task.value}`;
-  //   const saved = localStorage.getItem(key);
+    const saved = localStorage.getItem(`timer-${user.id}-${task.value}`);
 
-  //   if (saved !== null) {
-  //     setTime(Number(saved));
-  //   } else {
-  //     setTime(task.savedTime || 0);
-  //   }
-  // }, [task?.value, user?.id]);
+    setTime(saved ? Number(saved) : task.savedTime || 0);
+  }, [task, user]);
 
   useEffect(() => {
     if (!task) return;
@@ -139,7 +134,7 @@ export default function ProjectTaskPage() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  },[]);
+  }, []);
 
   const startTimer = () => {
     if (!window.timer && task) {
@@ -186,10 +181,12 @@ export default function ProjectTaskPage() {
   };
 
   const handleLogout = () => {
-    // localStorage.removeItem("hrms_last_user");
-    localStorage.setItem("timer-running", isRunning ? "1" : "0");
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith(`timer-${user.id}-`))
+      .forEach((k) => localStorage.removeItem(k));
+
     logout();
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   //   const handleLogout = async () => {
@@ -249,7 +246,7 @@ export default function ProjectTaskPage() {
     if (!task) return;
 
     const updated = taskOption.find((opt) => opt.value === task.value);
-    if(!updated) return;
+    if (!updated) return;
 
     if (updated.savedTime !== task.savedTime) {
       setTask(updated);
@@ -296,7 +293,6 @@ export default function ProjectTaskPage() {
       minHeight: "42px",
       fontSize: "14px",
     }),
-
     menu: (base) => ({
       ...base,
       width: "100%",
@@ -305,13 +301,11 @@ export default function ProjectTaskPage() {
       // marginRight: "18px",
       marginTop: 0,
     }),
-
     menuList: (base) => ({
       ...base,
       padding: 0,
       maxHeight: "180px",
     }),
-
     option: (base, state) => ({
       ...base,
       whiteSpace: "nowrap",

@@ -7,7 +7,7 @@ const {
   screen,
   ipcMain,
   globalShortcut,
-  shell
+  shell,
 } = require("electron");
 const path = require("path");
 const waitPort = require("wait-port");
@@ -70,10 +70,10 @@ async function createWindow() {
   });
 
   win.on("blur", () => {
-    if (win.isVisible()){
+    if (win.isVisible()) {
       win.hide();
     }
-  })
+  });
 
   // macOS floating
   if (platform === "darwin") {
@@ -271,7 +271,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("open-external", async (_, url) => {
     await shell.openExternal(url);
-  })
+  });
 
   setInterval(() => {
     if (
@@ -285,19 +285,24 @@ app.whenReady().then(async () => {
   }, 10000);
 
   ipcMain.handle("hide-window", () => {
-    if(win && !win.isDestroyed()){
+    if (win && !win.isDestroyed()) {
       win.hide();
     }
   });
 
-//  app.whenReady().then(() => {
-//     require("./localServer");
-//   }) 
-
+  //  app.whenReady().then(() => {
+  //     require("./localServer");
+  //   })
+  // hide popup when clicking outside
+  // win.on("blur", () => {
+  //   if(win.isVisible()){
+  //     win.hide();
+  //   }
+  // })
 });
 
 // build code start
-app.on("quit", () => {
-  if (serverProcess) serverProcess.kill();
-});
+// app.on("quit", () => {
+//   if (serverProcess) serverProcess.kill();
+// });
 //build code end
