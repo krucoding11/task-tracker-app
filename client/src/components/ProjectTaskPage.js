@@ -8,6 +8,7 @@ import { useProject } from "../context/ProjectContext";
 import { CiMenuKebab } from "react-icons/ci";
 import { useRef } from "react";
 import parse from "html-react-parser";
+import { useMemo } from "react";
 
 export default function ProjectTaskPage() {
   const { user, logout, authToken } = useAuth();
@@ -55,15 +56,17 @@ export default function ProjectTaskPage() {
   }, []);
 
   useEffect(() => {
-  if (!task || !user) return;
+    if (!task || !user) return;
 
-  const saved = localStorage.getItem(
-    `timer-${user.id}-${task.value}`
-  );
+    const key = `timer-${user.id}-${task.value}`;
+    const saved = localStorage.getItem(key);
 
-  setTime(saved ? Number(saved) : task.savedTime || 0);
-}, [task, user]);
-
+    if (saved !== null) {
+      setTime(Number(saved));
+    } else {
+      setTime(task.savedTime || 0);
+    }
+  }, [task?.value, user?.id]);
 
   useEffect(() => {
     if (!task) return;
@@ -88,19 +91,37 @@ export default function ProjectTaskPage() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  useEffect(() => {
-    if (!task) {
+   useEffect(() => {
+    if (!task?.value) {
       setTimeEntries([]);
       return;
     }
 
-    const loadEntries = async () => {
-      const entries = await getTimeEntriesForTask(task.value); // getTimeEntriesForTask - retrieves past log
-      setTimeEntries(entries);
-    };
+    let active = true;
 
-    loadEntries();
-  }, [task, getTimeEntriesForTask]);
+    (async () => {
+      const entries = await getTimeEntriesForTask(task.value);
+      if (active) setTimeEntries(entries);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [task?.value]);
+
+  // useEffect(() => {
+  //   if (!task) {
+  //     setTimeEntries([]);
+  //     return;
+  //   }
+
+  //   const loadEntries = async () => {
+  //     const entries = await getTimeEntriesForTask(task.value); // getTimeEntriesForTask - retrieves past log
+  //     setTimeEntries(entries);
+  //   };
+
+  //   loadEntries();
+  // }, [task, getTimeEntriesForTask]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -124,10 +145,11 @@ export default function ProjectTaskPage() {
     if (!window.timer && task) {
       setIsRunning(true);
       setShowProjectMenu(false);
+      const key = `timer-${user.id}-${task.value}`;
       window.timer = setInterval(() => {
         setTime((t) => {
           const newTime = t + 1;
-          localStorage.setItem(`timer-${user.id}-${task.value}`, newTime);
+          localStorage.setItem(key, newTime);
           return newTime;
         });
       }, 1000);
@@ -154,14 +176,8 @@ export default function ProjectTaskPage() {
         notes: "Timer logged via timer",
       });
 
-      const entries = await getTimeEntriesForTask(task.value);
-      const totalSeconds = entries.reduce((sum, e) => Math.round(Number(e.hours_spent) * 3600) + sum, 0);
-
-      setTime(totalSeconds);
-      localStorage.setItem(`timer-${user.id}-${task.value}`, totalSeconds);
-
       await fetchTasks();
-      // setLastStoppedTask(task.value);
+      setLastStoppedTask(task.value);
 
       setTime(task.savedTime || 0);
     } catch (error) {
@@ -170,14 +186,11 @@ export default function ProjectTaskPage() {
   };
 
   const handleLogout = () => {
-  Object.keys(localStorage)
-    .filter(k => k.startsWith(`timer-${user.id}-`))
-    .forEach(k => localStorage.removeItem(k));
-
-  logout();
-  navigate("/", { replace: true });
-};
-
+    // localStorage.removeItem("hrms_last_user");
+    localStorage.setItem("timer-running", isRunning ? "1" : "0");
+    logout();
+    navigate("/");
+  };
 
   //   const handleLogout = async () => {
   //   localStorage.setItem("timer-running", isRunning ? "1" : "0");
@@ -210,11 +223,11 @@ export default function ProjectTaskPage() {
     }
   };
 
-  const taskOption = filteredTasks.map((t) => {
+  const taskOption = useMemo(() =>{
+   return filteredTasks.map((t) => {
     const historyTask = taskHistory.find((ht) => ht.value === t.id);
     // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
-    const userId = user?.id;
-    const localTimeRaw = localStorage.getItem(`timer-${userId}-${t.id}`);
+    const localTimeRaw = localStorage.getItem(`timer-${user.id}-${t.id}`);
     const localTime = localTimeRaw ? Number(localTimeRaw) : null;
 
     const savedTime =
@@ -230,6 +243,7 @@ export default function ProjectTaskPage() {
       description: t.description,
     };
   });
+},[filteredTasks, user?.id]);
 
   useEffect(() => {
     if (!task) return;
@@ -239,7 +253,7 @@ export default function ProjectTaskPage() {
     if (updated) {
       setTask(updated);
     }
-  }, [time, taskOption]);
+  }, [taskOption]);
 
   useEffect(() => {
     setTask(null);
