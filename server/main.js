@@ -6,7 +6,8 @@ const app = express();
 console.log("ENV Loaded and DB_NAME...............", process.env.DB_NAME);
 
 sequelize
-  .sync({ alter: true }, { force: true })
+  // .sync({ alter: true }, { force: true })
+  .sync({ alter: true })
   .then(() => {
     console.log("All tables synced.");
   })

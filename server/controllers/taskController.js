@@ -69,30 +69,57 @@ exports.getTasksByEmployeeId = async (req, res) => {
       bindings.push(req.query.assigned_to);
     }
 
+    // if (!isAdmin) {
+    //   const authorizedCreatorIds = await getAuthorizedProjectCreatorIds(user);
+    //   if (
+    //     user.permissions.includes("tasks:manage:team") &&
+    //     authorizedCreatorIds?.length > 0
+    //   ) {
+    //     whereParts.push(`
+    //      (
+    //        t.creator_id IN (${authorizedCreatorIds.join(",")})
+    //        OR t.id IN (
+    //          SELECT DISTINCT task_id FROM task_assignees WHERE employee_id IN (${authorizedCreatorIds.join(
+    //            ",",
+    //          )})
+    //        )
+    //      )
+    //    `);
+    //   } else {
+    //     whereParts.push(`
+    //      (
+    //        t.creator_id = ?
+    //        OR t.id IN (SELECT DISTINCT task_id FROM task_assignees WHERE employee_id = ?)
+    //      )
+    //    `);
+    //     bindings.push(employeeId, employeeId);
+    //   }
+    // }
     if (!isAdmin) {
-      const authorizedCreatorIds = await getAuthorizedProjectCreatorIds(user);
-      if (
-        user.permissions.includes("tasks:manage:team") &&
-        authorizedCreatorIds?.length > 0
-      ) {
+      if (user.permissions.includes("tasks:manage:team")) {
+        // Manager: tasks assigned to themselves OR their subordinates OR created by themselves
+        const subordinates = await db("employees")
+          .where({ manager_id: employeeId })
+          .select("id");
+        const subordinateIds = subordinates.map((s) => s.id);
+
+        const allIds = [employeeId, ...subordinateIds];
+
         whereParts.push(`
-         (
-           t.creator_id IN (${authorizedCreatorIds.join(",")})
-           OR t.id IN (
-             SELECT DISTINCT task_id FROM task_assignees WHERE employee_id IN (${authorizedCreatorIds.join(
-               ",",
-             )})
-           )
-         )
-       `);
+      (
+        t.creator_id = ?
+        OR t.id IN (SELECT task_id FROM task_assignees WHERE employee_id IN (${allIds.join(
+          ",",
+        )}))
+      )
+    `);
+        bindings.push(employeeId); // for t.creator_id = ?
       } else {
+        // Normal user: only tasks assigned to themselves
         whereParts.push(`
-         (
-           t.creator_id = ?
-           OR t.id IN (SELECT DISTINCT task_id FROM task_assignees WHERE employee_id = ?)
-         )
-       `);
-        bindings.push(employeeId, employeeId);
+      t.id IN (SELECT task_id FROM task_assignees WHERE employee_id = ?)
+    `);
+        bindings.push(employeeId);
       }
     }
 
@@ -739,7 +766,7 @@ exports.getTimeEntriesForTask = async (req, res) => {
   try {
     const timeEntries = await db("time_entries")
       .join("employees", "time_entries.employee_id", "employees.id")
-      .where({ task_id: taskId })
+      .where({ task_id: taskId, })
       .select("time_entries.*", "employees.first_name", "employees.last_name");
     res.status(200).json(timeEntries);
   } catch (error) {

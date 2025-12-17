@@ -7,6 +7,7 @@ import { useProject } from "../context/ProjectContext";
 // import { FaCircleUser } from "react-icons/fa6";
 import { CiMenuKebab } from "react-icons/ci";
 import { useRef } from "react";
+import parse from "html-react-parser";
 
 export default function ProjectTaskPage() {
   const { user, logout, authToken } = useAuth();
@@ -24,6 +25,7 @@ export default function ProjectTaskPage() {
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const [underSelectedProject, setUnderSelectedProject] = useState(false);
   const [taskMenuWidth, setTaskMenuWidth] = useState(0);
+  const [lastStoppedTask, setLastStoppedTask] = useState(null);
   // const [description, setDescription] = useState("");
 
   const userMenuRef = useRef(null);
@@ -53,15 +55,15 @@ export default function ProjectTaskPage() {
   }, []);
 
   useEffect(() => {
-    if (!task) return;
+  if (!task || !user) return;
 
-    const saved = localStorage.getItem(`timer-${task.value}`);
-    if (saved) {
-      setTime(Number(saved));
-    } else {
-      setTime(task.savedTime || 0);
-    }
-  }, [task]);
+  const saved = localStorage.getItem(
+    `timer-${user.id}-${task.value}`
+  );
+
+  setTime(saved ? Number(saved) : task.savedTime || 0);
+}, [task, user]);
+
 
   useEffect(() => {
     if (!task) return;
@@ -75,16 +77,16 @@ export default function ProjectTaskPage() {
     return () => clearInterval(window.timer);
   }, []);
 
- useEffect(() => {
-  const updateWidth = () => {
-    if (taskContainerRef.current) {
-      setTaskMenuWidth(taskContainerRef.current.offsetWidth);
-    }
-  };
-  updateWidth(); // initial measurement
-  window.addEventListener("resize", updateWidth);
-  return () => window.removeEventListener("resize", updateWidth);
-}, []);
+  useEffect(() => {
+    const updateWidth = () => {
+      if (taskContainerRef.current) {
+        setTaskMenuWidth(taskContainerRef.current.offsetWidth);
+      }
+    };
+    updateWidth(); // initial measurement
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   useEffect(() => {
     if (!task) {
@@ -125,7 +127,7 @@ export default function ProjectTaskPage() {
       window.timer = setInterval(() => {
         setTime((t) => {
           const newTime = t + 1;
-          localStorage.setItem(`timer-${task.value}`, newTime);
+          localStorage.setItem(`timer-${user.id}-${task.value}`, newTime);
           return newTime;
         });
       }, 1000);
@@ -137,49 +139,56 @@ export default function ProjectTaskPage() {
     clearInterval(window.timer);
     window.timer = null;
     setIsRunning(false);
-    window.electronAPI?.sendStatus("red");
 
-    localStorage.setItem("timer-running", "0");
+    window.electronAPI?.sendStatus("red");
 
     if (!task) return;
 
-    const updatedTask = { ...task, savedTime: Math.floor(time) };
-
-    // update taskHistory
-    setTaskHistory((prev) => [
-      ...prev.filter((t) => t.value !== task.value),
-      updatedTask,
-    ]);
-
-    // remove localStorage
-    localStorage.removeItem(`timer-${task.value}`);
-
-    setTimeout(() => {
-      const newOption = taskOption.find(
-        (opt) => opt.value === updatedTask.value
-      );
-      if (newOption) setTask(newOption);
-    }, 50);
-
     try {
       const entryDate = new Date().toISOString().split("T")[0];
+
       await logTime({
         taskId: task.value,
         hoursSpent: time / 3600,
         entryDate,
-        notes: `Timer logged via timer`,
+        notes: "Timer logged via timer",
       });
+
+      const entries = await getTimeEntriesForTask(task.value);
+      const totalSeconds = entries.reduce((sum, e) => Math.round(Number(e.hours_spent) * 3600) + sum, 0);
+
+      setTime(totalSeconds);
+      localStorage.setItem(`timer-${user.id}-${task.value}`, totalSeconds);
+
+      await fetchTasks();
+      // setLastStoppedTask(task.value);
+
+      setTime(task.savedTime || 0);
     } catch (error) {
       console.error("Failed to log time", error);
     }
   };
 
   const handleLogout = () => {
-    // localStorage.removeItem("hrms_last_user");
-    localStorage.setItem("timer-running", isRunning ? "1" : "0");
-    logout();
-    navigate("/");
-  };
+  Object.keys(localStorage)
+    .filter(k => k.startsWith(`timer-${user.id}-`))
+    .forEach(k => localStorage.removeItem(k));
+
+  logout();
+  navigate("/", { replace: true });
+};
+
+
+  //   const handleLogout = async () => {
+  //   localStorage.setItem("timer-running", isRunning ? "1" : "0");
+  //   await logout();
+
+  //   if (window.electronAPI?.reloadWindow) {
+  //     window.electronAPI.reloadWindow(); // reload main window
+  //   } else {
+  //     navigate("/", { replace: true });
+  //   }
+  // };
 
   const filteredTasks =
     project && project.value !== "all"
@@ -204,18 +213,33 @@ export default function ProjectTaskPage() {
   const taskOption = filteredTasks.map((t) => {
     const historyTask = taskHistory.find((ht) => ht.value === t.id);
     // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
-    const localTime = Number(localStorage.getItem(`timer-${t.id}`));
+    const userId = user?.id;
+    const localTimeRaw = localStorage.getItem(`timer-${userId}-${t.id}`);
+    const localTime = localTimeRaw ? Number(localTimeRaw) : null;
+
     const savedTime =
-      localTime > 0 ? localTime : historyTask?.savedTime ?? t.savedTime ?? 0;
+      localTime !== null
+        ? localTime
+        : historyTask?.savedTime ?? t.savedTime ?? 0;
 
     return {
       value: t.id,
       // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
-      label: t.title || "Untitled Task",
+      label: t.title,
       savedTime,
       description: t.description,
     };
   });
+
+  useEffect(() => {
+    if (!task) return;
+
+    const updated = taskOption.find((opt) => opt.value === task.value);
+
+    if (updated) {
+      setTask(updated);
+    }
+  }, [time, taskOption]);
 
   useEffect(() => {
     setTask(null);
@@ -245,8 +269,9 @@ export default function ProjectTaskPage() {
   const customStyles = {
     container: (base) => ({
       ...base,
-      width: "100%", // make container full width
+      width: "100%",
     }),
+
     control: (base, state) => ({
       ...base,
       width: "100%",
@@ -256,21 +281,22 @@ export default function ProjectTaskPage() {
       minHeight: "42px",
       fontSize: "14px",
     }),
+
     menu: (base) => ({
       ...base,
-      width: "100%", // set dropdown menu width same as input
+      width: "100%",
+      maxWidth: "90%",
+      marginLeft: "19px",
+      // marginRight: "18px",
+      marginTop: 0,
     }),
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-      width: "auto", // or "100%" if needed
-    }),
+
     menuList: (base) => ({
       ...base,
       padding: 0,
       maxHeight: "180px",
-      overflowY: "auto",
     }),
+
     option: (base, state) => ({
       ...base,
       whiteSpace: "nowrap",
@@ -286,6 +312,19 @@ export default function ProjectTaskPage() {
       color: "#111827",
     }),
   };
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (taskContainerRef.current) {
+        setTaskMenuWidth(taskContainerRef.current.offsetWidth); // Update width on resize
+      }
+    };
+
+    updateWidth(); // initial measurement
+    window.addEventListener("resize", updateWidth); // Recalculate width on window resize
+
+    return () => window.removeEventListener("resize", updateWidth); // Clean up listener
+  }, []);
 
   const getInitials = (user) => {
     if (!user) return "";
@@ -486,19 +525,17 @@ export default function ProjectTaskPage() {
             placeholder={project ? "Select task" : "Select project first"}
             isSearchable
             menuPlacement="bottom"
-            menuPosition="fixed" // important
-            menuPortalTarget={document.body}
             classNamePrefix="react-select"
             isDisabled={isRunning || !project}
-            styles={{
-              ...customStyles,
-              menuPortal: (base) => ({
-                ...base,
-                width: taskMenuWidth,
-                zIndex: 9999,
-              }),
-              menu: (base) => ({ ...base, width: taskMenuWidth }),
-            }}
+            styles={customStyles}
+            formatOptionLabel={(option) => (
+              <div className="flex justify-between items-center w-full">
+                <span className="truncate">{option.label}</span>
+                <span className="font-mono text-red-500 ml-3">
+                  {formateTime(option.savedTime)}
+                </span>
+              </div>
+            )}
           />
         </div>
       </div>
@@ -543,24 +580,43 @@ export default function ProjectTaskPage() {
           <strong>Description:</strong>
           <span
             onClick={openHRMSLink}
-            className="text-blue-600 font-medium hover:underline cursor-pointer"
+            className="text-blue-600 font-medium hover:underline"
           >
-            For More Information...
+            <p className="cursor-pointer">For More Information...</p>
           </span>
         </div>
-        {task ? (
-          <div className="p-3 mt-2 border rounded-md bg-gray-50 text-sm text-gray-700">
-            {/* <p className="mt-1">{task.description || "No Description available"}</p> */}
-            <div
-              className="mt-1"
-              dangerouslySetInnerHTML={{
-                __html: task.description || "No Description available",
-              }}
-            />
-          </div>
-        ) : (
-          <p className="text-gray-400 text-sm mt-2">No task selected</p>
-        )}
+        <div className="bg-gray-100 p-3 mt-2 rounded-md text-sm text-gray-700 max-h-40 overflow-y-auto break-words">
+          {task && task.description
+            ? parse(task.description, {
+                replace: (domNode) => {
+                  if (domNode.name === "a") {
+                    const url = domNode.attribs.href;
+                    return (
+                      <a
+                        href={url}
+                        className="text-blue-600 hover:underline"
+                        onClick={async (e) => {
+                          e.preventDefault();
+
+                          if (window.electronAPI?.hideWindow) {
+                            await window.electronAPI.hideWindow();
+                          }
+
+                          if (window.electronAPI?.openExternal) {
+                            window.electronAPI.openExternal(url);
+                          } else {
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                      >
+                        {domNode.children[0]?.data || ""}
+                      </a>
+                    );
+                  }
+                },
+              })
+            : "No Description available"}
+        </div>
       </div>
 
       {/* <a

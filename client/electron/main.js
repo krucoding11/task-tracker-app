@@ -65,6 +65,12 @@ async function createWindow() {
     },
   });
 
+  win.on("blur", () => {
+    if (win.isVisible()){
+      win.hide();
+    }
+  })
+
   // macOS floating
   if (platform === "darwin") {
     win.setAlwaysOnTop(true, "status");
@@ -256,6 +262,10 @@ app.whenReady().then(async () => {
       win.hide();
     }
   });
+
+//  app.whenReady().then(() => {
+//     require("./localServer");
+//   }) 
   // hide popup when clicking outside
   // win.on("blur", () => {
   //   if(win.isVisible()){

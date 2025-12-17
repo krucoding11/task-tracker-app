@@ -12,6 +12,7 @@ const protect = (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
       const decoded = decodeToken(token);
       req.user = decoded;
+      console.log('decoded: ', decoded);
       next();
     } catch (error) {
       res.status(401).json({ error: "Not authorized, token failed" });
