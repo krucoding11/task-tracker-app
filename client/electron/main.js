@@ -266,10 +266,5 @@ app.whenReady().then(async () => {
 //  app.whenReady().then(() => {
 //     require("./localServer");
 //   }) 
-  // hide popup when clicking outside
-  // win.on("blur", () => {
-  //   if(win.isVisible()){
-  //     win.hide();
-  //   }
-  // })
+
 });

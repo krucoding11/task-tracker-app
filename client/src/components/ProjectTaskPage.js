@@ -55,18 +55,18 @@ export default function ProjectTaskPage() {
     setProject({ value: "all", label: "All Projects" });
   }, []);
 
-  useEffect(() => {
-    if (!task || !user) return;
+  // useEffect(() => {
+  //   if (!task || !user) return;
 
-    const key = `timer-${user.id}-${task.value}`;
-    const saved = localStorage.getItem(key);
+  //   const key = `timer-${user.id}-${task.value}`;
+  //   const saved = localStorage.getItem(key);
 
-    if (saved !== null) {
-      setTime(Number(saved));
-    } else {
-      setTime(task.savedTime || 0);
-    }
-  }, [task?.value, user?.id]);
+  //   if (saved !== null) {
+  //     setTime(Number(saved));
+  //   } else {
+  //     setTime(task.savedTime || 0);
+  //   }
+  // }, [task?.value, user?.id]);
 
   useEffect(() => {
     if (!task) return;
@@ -91,7 +91,7 @@ export default function ProjectTaskPage() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!task?.value) {
       setTimeEntries([]);
       return;
@@ -139,7 +139,7 @@ export default function ProjectTaskPage() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  });
+  },[]);
 
   const startTimer = () => {
     if (!window.timer && task) {
@@ -179,7 +179,7 @@ export default function ProjectTaskPage() {
       await fetchTasks();
       setLastStoppedTask(task.value);
 
-      setTime(task.savedTime || 0);
+      // setTime(task.savedTime || 0);
     } catch (error) {
       console.error("Failed to log time", error);
     }
@@ -223,34 +223,35 @@ export default function ProjectTaskPage() {
     }
   };
 
-  const taskOption = useMemo(() =>{
-   return filteredTasks.map((t) => {
-    const historyTask = taskHistory.find((ht) => ht.value === t.id);
-    // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
-    const localTimeRaw = localStorage.getItem(`timer-${user.id}-${t.id}`);
-    const localTime = localTimeRaw ? Number(localTimeRaw) : null;
+  const taskOption = useMemo(() => {
+    return filteredTasks.map((t) => {
+      const historyTask = taskHistory.find((ht) => ht.value === t.id);
+      // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
+      const localTimeRaw = localStorage.getItem(`timer-${user.id}-${t.id}`);
+      const localTime = localTimeRaw ? Number(localTimeRaw) : null;
 
-    const savedTime =
-      localTime !== null
-        ? localTime
-        : historyTask?.savedTime ?? t.savedTime ?? 0;
+      const savedTime =
+        localTime !== null
+          ? localTime
+          : historyTask?.savedTime ?? t.savedTime ?? 0;
 
-    return {
-      value: t.id,
-      // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
-      label: t.title,
-      savedTime,
-      description: t.description,
-    };
-  });
-},[filteredTasks, user?.id]);
+      return {
+        value: t.id,
+        // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
+        label: t.title,
+        savedTime,
+        description: t.description,
+      };
+    });
+  }, [filteredTasks, user?.id]);
 
   useEffect(() => {
     if (!task) return;
 
     const updated = taskOption.find((opt) => opt.value === task.value);
+    if(!updated) return;
 
-    if (updated) {
+    if (updated.savedTime !== task.savedTime) {
       setTask(updated);
     }
   }, [taskOption]);
@@ -535,7 +536,11 @@ export default function ProjectTaskPage() {
           <Select
             options={taskOption}
             value={task}
-            onChange={setTask}
+            // onChange={setTask}
+            onChange={(selected) => {
+              setTask(selected);
+              setTime(selected?.savedTime || 0);
+            }}
             placeholder={project ? "Select task" : "Select project first"}
             isSearchable
             menuPlacement="bottom"
