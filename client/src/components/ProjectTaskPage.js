@@ -12,8 +12,9 @@ import { useMemo } from "react";
 
 export default function ProjectTaskPage() {
   const { user, logout, authToken } = useAuth();
-  const { tasks, fetchTasks, logTime, getTimeEntriesForTask } = useTasks();
-  const { projects, fetchProjects } = useProject();
+  const { tasks, fetchTasks, logTime, getTimeEntriesForTask, fetchTaskById } =
+    useTasks();
+  const { projects, fetchProjects, fetchProjectById } = useProject();
 
   const [project, setProject] = useState(null);
   const [task, setTask] = useState(null);
@@ -24,7 +25,7 @@ export default function ProjectTaskPage() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   // const [projectOwners, setProjectOwners] = useState({});
   const [showProjectMenu, setShowProjectMenu] = useState(false);
-  const [underSelectedProject, setUnderSelectedProject] = useState(false);
+  // const [underSelectedProject, setUnderSelectedProject] = useState(false);
   const [taskMenuWidth, setTaskMenuWidth] = useState(0);
   const [lastStoppedTask, setLastStoppedTask] = useState(null);
   // const [description, setDescription] = useState("");
@@ -32,6 +33,11 @@ export default function ProjectTaskPage() {
   const userMenuRef = useRef(null);
   const projectMenuRef = useRef(null);
   const taskContainerRef = useRef(null);
+  const lastProjectIdRef = useRef(null);
+
+  // const previousTaskIdRef = useRef(new Set());
+  // const taskPollingRef = useRef(null);
+  const lastTaskIdRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -45,23 +51,91 @@ export default function ProjectTaskPage() {
   }, []);
 
   useEffect(() => {
-    if (authToken) {
-      fetchTasks();
-      fetchProjects();
-    }
-  }, []);
+    // if (authToken) {
+    //   fetchTasks();
+    //   fetchProjects();
+    // }
+    if (!authToken) return;
+    // fetchTasks();
+    fetchProjects();
+  }, [authToken]);
 
   useEffect(() => {
     setProject({ value: "all", label: "All Projects" });
   }, []);
 
+  // useEffect(() => {
+  //   if (!project) return;
+  //   if(project.value === "all"){
+  //     setTask(null);
+  //     return;
+  //   }
+  //   setTask(null);
+  //   fetchProjectById(project.value);
+  // },[project?.value]);
   useEffect(() => {
-    if (!task || !user) return;
+    if (!project?.value || project.value === "all") return;
+    if (lastProjectIdRef.current === project.value) return;
+    lastProjectIdRef.current = project.value;
+    fetchProjectById(project.value);
+  }, [project?.value]);
 
-    const saved = localStorage.getItem(`timer-${user.id}-${task.value}`);
+  useEffect(() => {
+    if (!task?.value) return;
+    if (lastTaskIdRef.current === task.value) return;
 
-    setTime(saved ? Number(saved) : task.savedTime || 0);
-  }, [task, user]);
+    lastTaskIdRef.current = task.value;
+    fetchTaskById(task.value);
+  }, [task?.value]);
+
+  // useEffect(() => {
+  //   if(!isRunning || !authToken) return;
+  //   const interval = setInterval(() => {
+  //     fetchTasks();
+  //   }, 60000);
+
+  //   return () => clearInterval(interval);
+  // },[isRunning, authToken]);
+
+  // useEffect(() => {
+  //   if (!authToken) return;
+  //   const interval = setInterval(() => {
+  //     fetchTasks();
+  //   }, 5000);
+  //   return () => clearInterval(interval);
+  // },[authToken, fetchTasks]);
+
+  // useEffect(() => {
+  //   if (!authToken) return;
+  //   if(taskPollingRef.current) return;
+  //   const checkForNewTasks = async () => {
+  //     const newTasks = await fetchTasks();
+
+  //     if(!newTasks || !Array.isArray(newTasks)) return;
+
+  //     const currentIds = new Set(newTasks.map(t => t.id));
+  //     const previousIds = previousTaskIdRef.current;
+
+  //     let hasNewTask = false;
+
+  //     for(const id of currentIds){
+  //       if(!previousIds.has(id)){
+  //         hasNewTask = true;
+  //         break;
+  //       }
+  //     }
+  //     previousTaskIdRef.current = currentIds;
+
+  //     if(hasNewTask){
+  //       console.log("New tasks received");
+  //     }
+  //   };
+  //   checkForNewTasks();
+
+  //   const interval = setInterval(checkForNewTasks, 5000);
+
+  //   return () => clearInterval(interval);
+  // },[authToken]);
 
   useEffect(() => {
     if (!task) return;
@@ -181,12 +255,15 @@ export default function ProjectTaskPage() {
   };
 
   const handleLogout = () => {
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith(`timer-${user.id}-`))
-      .forEach((k) => localStorage.removeItem(k));
+    localStorage.setItem("timer-running", isRunning ? "1" : "0");
 
+    if (window.timer) {
+      clearInterval(window.timer);
+      window.timer = null;
+    }
+    window.electronAPI.sendStatus("clear");
     logout();
-    navigate("/", { replace: true });
+    navigate("/");
   };
 
   //   const handleLogout = async () => {
@@ -293,6 +370,7 @@ export default function ProjectTaskPage() {
       minHeight: "42px",
       fontSize: "14px",
     }),
+
     menu: (base) => ({
       ...base,
       width: "100%",
@@ -301,11 +379,13 @@ export default function ProjectTaskPage() {
       // marginRight: "18px",
       marginTop: 0,
     }),
+
     menuList: (base) => ({
       ...base,
       padding: 0,
       maxHeight: "180px",
     }),
+
     option: (base, state) => ({
       ...base,
       whiteSpace: "nowrap",
@@ -347,7 +427,7 @@ export default function ProjectTaskPage() {
 
     const lastHRMSUser = localStorage.getItem("hrms_last_user");
 
-    let targetURL = "https://hrms.edeltacorp.com/login";
+    let targetURL = "https://hrms.edeltacorp.com/my-tasks";
 
     if (lastHRMSUser && lastHRMSUser === currentUserId) {
       targetURL = "https://hrms.edeltacorp.com/my-tasks";
@@ -376,14 +456,14 @@ export default function ProjectTaskPage() {
           >
             {getInitials(user)}
             {/* {user?.profile_picture_url ? (
-                <img
-                  src={`${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`}
-                  alt={user.first_name}
-                  className="w-10 h-10 rounded-full object-cover border border-gray-300"
-                />
-              ) : (
-                <FaCircleUser className="text-[30px]" />
-              )} */}
+                  <img
+                    src={`${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`}
+                    alt={user.first_name}
+                    className="w-10 h-10 rounded-full object-cover border border-gray-300"
+                  />
+                ) : (
+                  <FaCircleUser className="text-[30px]" />
+                )} */}
             {/* <FaCircleUser className="text-[30px] cursor-pointer" /> */}
           </button>
           {showUserMenu && (
@@ -431,18 +511,18 @@ export default function ProjectTaskPage() {
       {/* <span className="text-sm font-medium">Select Project: </span> */}
 
       {/* <Select
-            options={projectOption}
-            value={project}
-            onChange={setProject}
-            placeholder="Select project"
-            isSearchable
-            menuPosition="fixed"
-            menuPortalTarget={document.body}
-            styles={customStyles}
-            classNamePrefix="react-select"
-            menuPlacement="bottom"
-            isDisabled={isRunning}
-          /> */}
+              options={projectOption}
+              value={project}
+              onChange={setProject}
+              placeholder="Select project"
+              isSearchable
+              menuPosition="fixed"
+              menuPortalTarget={document.body}
+              styles={customStyles}
+              classNamePrefix="react-select"
+              menuPlacement="bottom"
+              isDisabled={isRunning}
+            /> */}
 
       {/* </div> */}
 
@@ -475,22 +555,20 @@ export default function ProjectTaskPage() {
 
             {showProjectMenu && (
               <div className="absolute right-0 top-full mt-1 w-56 bg-white border shadow-lg rounded-md z-50 max-h-60 overflow-y-auto">
-                {underSelectedProject && (
-                  <div>
-                    <button
-                      onClick={() => {
-                        setProject({ value: "all", label: "All Projects" });
-                        setShowProjectMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
-                    >
-                      <span>All Projects</span>
-                    </button>
+                <div>
+                  <button
+                    onClick={() => {
+                      setProject({ value: "all", label: "All Projects" });
+                      setShowProjectMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex justify-between items-center"
+                  >
+                    <span>All Projects</span>
+                  </button>
 
-                    {/* Divider under All Projects */}
-                    <div className="border-b border-gray-200"></div>
-                  </div>
-                )}
+                  {/* Divider under All Projects */}
+                  <div className="border-b border-gray-200"></div>
+                </div>
 
                 {projects.length === 0 ? (
                   <p className="p-2 text-sm text-gray-500">No project found</p>
@@ -499,7 +577,7 @@ export default function ProjectTaskPage() {
                     <div key={p.id}>
                       <button
                         onClick={() => {
-                          setUnderSelectedProject(true);
+                          // setUnderSelectedProject(true);
                           setProject({ value: p.id, label: p.name || p.title });
                           setShowProjectMenu(false);
                         }}
@@ -535,6 +613,9 @@ export default function ProjectTaskPage() {
               setTask(selected);
               setTime(selected?.savedTime || 0);
             }}
+            onMenuOpen={async () => {
+              await fetchTasks();
+            }}
             placeholder={project ? "Select task" : "Select project first"}
             isSearchable
             menuPlacement="bottom"
@@ -557,37 +638,37 @@ export default function ProjectTaskPage() {
       {/* <div className="flex items-center gap-4"> */}
 
       {/* <button
-            onClick={startTimer}
-            disabled={!task}
-            className={`px-3 py-1 rounded text-white ${
-              !task
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600"
-            } `}
-          >
-            Start
-          </button>
-          <button
-            onClick={stopTimer}
-            disabled={!task}
-            className={`px-3 py-1 rounded text-white ${
-              !task
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-red-500 hover:bg-red-600"
-            } `}
-          >
-            Stop
-          </button> */}
+              onClick={startTimer}
+              disabled={!task}
+              className={`px-3 py-1 rounded text-white ${
+                !task
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600"
+              } `}
+            >
+              Start
+            </button>
+            <button
+              onClick={stopTimer}
+              disabled={!task}
+              className={`px-3 py-1 rounded text-white ${
+                !task
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-red-500 hover:bg-red-600"
+              } `}
+            >
+              Stop
+            </button> */}
       {/* </div> */}
 
       {/* description */}
       {/* <textarea
-          className="w-full border p-2 rounded-md"
-          rows="4"
-          placeholder="Task description..."
-          value={description} 
-          onChange={(e) => setDescription(e.target.value)}
-        /> */}
+            className="w-full border p-2 rounded-md"
+            rows="4"
+            placeholder="Task description..."
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)}
+          /> */}
       <div className="mt-4">
         <div className="flex justify-between items-center">
           <strong>Description:</strong>
@@ -633,13 +714,13 @@ export default function ProjectTaskPage() {
       </div>
 
       {/* <a
-            href="https://hrms.edeltacorp.com/my-tasks"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="fixed bottom-4 right-5 text-blue-600 font-medium hover:underline"
-          >
-            For More Information...
-          </a> */}
+              href="https://hrms.edeltacorp.com/my-tasks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fixed bottom-4 right-5 text-blue-600 font-medium hover:underline"
+            >
+              For More Information...
+            </a> */}
     </div>
   );
 }

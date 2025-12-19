@@ -56,8 +56,12 @@ export default function LoginPage() {
               type="email"
               id="email"
               value={email}
-              onChange={(e) => {setEmail(e.target.value); console.log("Email change", e.target.value); e.preventDefault();
+              // onChange={(e) => {setEmail(e.target.value); console.log("Email change", e.target.value); e.preventDefault();}}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => {
+                console.log("Final Email", email);
               }}
+              
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
             />

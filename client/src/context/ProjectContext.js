@@ -36,6 +36,27 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
+    const fetchProjectById = async (projectId) => {
+        if (!authToken || !projectId) return;
+
+        try {
+            setLoading(true);
+            setError("");
+
+            const response = await axios.get(`${API_URL}/api/projects/${projectId}`,
+                {
+                    headers: {Authorization: `Bearer ${authToken}`},
+                }
+            );
+            return response.data.data;
+        } catch (error) {
+            console.error("Project details fetch error", error);
+            setError(error.response?.data?.message || "Failed to fetch project details");
+        }finally{
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
         if(authToken){
             fetchProjects();
@@ -43,7 +64,7 @@ export const ProjectProvider = ({ children }) => {
     },[authToken]);
 
   return (
-    <ProjectContext.Provider value={{ projects, meta, loading, error, fetchProjects}}>
+    <ProjectContext.Provider value={{ projects, meta, loading, error, fetchProjects, fetchProjectById}}>
       {children}
     </ProjectContext.Provider>
   );

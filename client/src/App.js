@@ -1,8 +1,8 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
-import TaskPage from "./components/TaskPage";
-import Users from "./components/UserLogin/UserPage";
+// import TaskPage from "./components/TaskPage";
+// import Users from "./components/UserLogin/UserPage";
 import ProjectTaskPage from "./components/ProjectTaskPage";
 import { useAuth } from "./context/AuthContext";
 
@@ -32,7 +32,7 @@ export default function App() {
         }
       />
 
-      <Route
+      {/* <Route
         path="/task"
         element={
           <RequireAuth>
@@ -48,7 +48,7 @@ export default function App() {
             <Users />
           </RequireAuth>
         }
-      />
+      /> */}
     </Routes>
   );
 }
