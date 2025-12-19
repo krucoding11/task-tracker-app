@@ -93,8 +93,8 @@ async function createWindow() {
   });
 
   if (!app.isPackaged) {
-    await waitPort({ host: "localhost", port: 5173 });
-    win.loadURL("http://localhost:5173");
+    await waitPort({ host: "localhost", port: 5174 });
+    win.loadURL("http://localhost:5174");
   } else {
     win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
   }
@@ -226,7 +226,7 @@ app.whenReady().then(async () => {
       tray.setImage(overlayDot(base, resourcePath("dot-red.png")));
     } else {
       tray.setImage(
-        nativeImage.createFromPath(base).resize({ width: 22, height: 22 })
+        nativeImage.createFromPath(base).resize({ width: 18, height: 18 })
       );
     }
     // let iconFile = "tray.png";

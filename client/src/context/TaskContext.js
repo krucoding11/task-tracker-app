@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 import axios from "axios";
 
@@ -14,10 +14,10 @@ export const TaskProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-
+  const isFetchingRef = useRef(false);
   const fetchTasks = async ({ status = "all", assigned_to = "" } = {}) => {
   if (!authToken) return;
-
+  isFetchingRef.current = true;
   try {
     setLoading(true);
     setError("");
@@ -44,26 +44,26 @@ export const TaskProvider = ({ children }) => {
 
       const baseTasks = response.data.data || [];
 
-      const tasksWithTime = await Promise.all(
-        baseTasks.map(async (task) => {
-          try {
-            const response = await axios.get(
-              `${API_URL}/api/tasks/${task.id}/time-entries`,
-              { headers: { Authorization: `Bearer ${authToken}` } }
-            );
-            const entries = response.data || [];
-            const totalSeconds = entries.reduce(
-              (sum, e) => sum + Math.round(Number(e.hours_spent) * 3600),
-              0
-            );
-            return { ...task, savedTime: totalSeconds };
-          } catch {
-            return { ...task, savedTime: 0 };
-          }
-        })
-      );
+      // const tasksWithTime = await Promise.all(
+      //   baseTasks.map(async (task) => {
+      //     try {
+      //       const response = await axios.get(
+      //         `${API_URL}/api/tasks/${task.id}/time-entries`,
+      //         { headers: { Authorization: `Bearer ${authToken}` } }
+      //       );
+      //       const entries = response.data || [];
+      //       const totalSeconds = entries.reduce(
+      //         (sum, e) => sum + Math.round(Number(e.hours_spent) * 3600),
+      //         0
+      //       );
+      //       return { ...task, savedTime: totalSeconds };
+      //     } catch {
+      //       return { ...task, savedTime: 0 };
+      //     }
+      //   })
+      // );
 
-      allTasks = [...allTasks, ...tasksWithTime];
+      allTasks = [...allTasks, ...baseTasks];
 
       // check pagination
       const meta = response.data.meta || {};
@@ -76,14 +76,24 @@ export const TaskProvider = ({ children }) => {
     ))
 
     setTasks(filteredTask);
+    return 
     // setTasks(allTasks);
   } catch (error) {
     console.error("Task fetch error", error);
     setError(error.response?.data?.message || "Failed to fetch tasks");
   } finally {
     setLoading(false);
+    isFetchingRef.current = false;
   }
 };
+
+useEffect(() => {
+  if(!authToken){
+    setTasks([]);
+    return;
+  }
+  fetchTasks();
+}, [authToken]);
 
   // const fetchTasks = async ({
   //   page = 1,
@@ -108,6 +118,7 @@ export const TaskProvider = ({ children }) => {
   //     const response = await axios.get(
   //       `${API_URL}/api/tasks/my-tasks?${params}`,
   //       {
+  
   //         headers: {
   //           Authorization: `Bearer ${authToken}`,
   //         },
@@ -149,6 +160,27 @@ export const TaskProvider = ({ children }) => {
   //     setLoading(false);
   //   }
   // };
+
+  const fetchTaskById = async (taskId) => {
+    if (!authToken || !taskId) return;
+    
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await axios.get(`${API_URL}/api/tasks/${taskId}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}`},
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("Task detail fetch error", error);
+      setError(error.response?.data?.message || "Failed to fetch task details");
+    }finally{
+      setLoading(false);
+    } 
+  }
 
   // log time for a task
   const logTime = async ({ taskId, hoursSpent, entryDate, notes = "" }) => {
@@ -209,6 +241,7 @@ export const TaskProvider = ({ children }) => {
         fetchTasks,
         logTime,
         getTimeEntriesForTask,
+        fetchTaskById
       }}
     >
       {children}
