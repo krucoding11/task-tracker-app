@@ -93,8 +93,8 @@ async function createWindow() {
   });
 
   if (!app.isPackaged) {
-    await waitPort({ host: "localhost", port: 5174 });
-    win.loadURL("http://localhost:5174");
+    await waitPort({ host: "localhost", port: 5173 });
+    win.loadURL("http://localhost:5173");
   } else {
     win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
   }

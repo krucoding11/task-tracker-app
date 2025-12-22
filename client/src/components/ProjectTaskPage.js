@@ -55,7 +55,7 @@
       //   fetchProjects();
       // }
       if (!authToken) return;
-      // fetchTasks();
+    
       fetchProjects();
     }, [authToken]);
 
@@ -209,6 +209,15 @@
       };
     },[]);
 
+    // useEffect(() => {
+    //   tasks.forEach((t) => {
+    //     const key = `timer-${user.id}-${t.id}`;
+    //     if(!t.savedTime || t.savedTime === 0){
+    //       localStorage.removeItem(key);
+    //     }
+    //   });
+    // },[tasks, user?.id]);
+
     const startTimer = () => {
       if (!window.timer && task) {
         setIsRunning(true);
@@ -236,13 +245,17 @@
 
       try {
         const entryDate = new Date().toISOString().split("T")[0];
+        const spentSeconds = time;
 
         await logTime({
           taskId: task.value,
-          hoursSpent: time / 3600,
+          hoursSpent: spentSeconds / 3600,
           entryDate,
           notes: "Timer logged via timer",
         });
+
+        const key = `timer-${user.id}-${task.value}`;
+        localStorage.setItem(key, spentSeconds);
 
         await fetchTasks();
         setLastStoppedTask(task.value);
@@ -298,16 +311,15 @@
 
     const taskOption = useMemo(() => {
       return filteredTasks.map((t) => {
-        const historyTask = taskHistory.find((ht) => ht.value === t.id);
+        // const historyTask = taskHistory.find((ht) => ht.value === t.id);
         // const savedTime = historyTask?.savedTime ?? t.savedTime ?? 0;
-        const localTimeRaw = localStorage.getItem(`timer-${user.id}-${t.id}`);
-        const localTime = localTimeRaw ? Number(localTimeRaw) : null;
+        // const localTimeRaw = localStorage.getItem(`timer-${user.id}-${t.id}`);
+        const localTime = Number(localStorage.getItem(`timer-${user.id}-${t.id}`) || 0);
 
         const savedTime =
-          localTime !== null
-            ? localTime
-            : historyTask?.savedTime ?? t.savedTime ?? 0;
-
+          t.savedTime && t.savedTime > 0
+          ? t.savedTime
+          : localTime ?? 0;
         return {
           value: t.id,
           // label: `${t.title}${savedTime > 0 ? ` - ${formatted}` : ""}`,
