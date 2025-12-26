@@ -7,7 +7,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const TaskContext = createContext();
 
 export const TaskProvider = ({ children }) => {
-  const { authToken } = useAuth();
+  const { authToken, user } = useAuth();
 
   const [tasks, setTasks] = useState([]);
   const [meta, setMeta] = useState({});
@@ -16,170 +16,82 @@ export const TaskProvider = ({ children }) => {
 
   const isFetchingRef = useRef(false);
   const fetchTasks = async ({ status = "all", assigned_to = "" } = {}) => {
-  if (!authToken) return;
-  isFetchingRef.current = true;
-  try {
-    setLoading(true);
-    setError("");
+    if (!authToken || isFetchingRef.current) return;
 
-    let allTasks = [];
-    let page = 1;
-    const limit = 50; // adjust as needed
-    let hasMore = true;
+    isFetchingRef.current = true;
+    try {
+      setLoading(true);
+      setError("");
 
-    while (hasMore) {
-      const params = new URLSearchParams({
-        page,
-        limit,
-        status,
-        ...(assigned_to && { assigned_to }),
-      });
+      let allTasks = [];
+      let page = 1;
+      const limit = 50;
+      let hasMore = true;
 
-      const response = await axios.get(
-        `${API_URL}/api/tasks/my-tasks?${params}`,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
+      while (hasMore) {
+        const params = new URLSearchParams({
+          page,
+          limit,
+          status,
+          ...(assigned_to && { assigned_to }),
+        });
+
+        const response = await axios.get(
+          `${API_URL}/api/tasks/my-tasks?${params}`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+
+        allTasks.push(...(response.data.data || []));
+        if (allTasks.length > 0) {
+          console.log("Task structure check:", allTasks[0]);
         }
+
+        const meta = response.data.meta || {};
+        hasMore = meta.has_more || false;
+        page++;
+      }
+
+      const filtered = allTasks.filter(
+        t => t.status === "Pending" || t.status === "In-Progress"
       );
 
-      const baseTasks = response.data.data || [];
-
-      // const tasksWithTime = await Promise.all(
-      //   baseTasks.map(async (task) => {
-      //     try {
-      //       const response = await axios.get(
-      //         `${API_URL}/api/tasks/${task.id}/time-entries`,
-      //         { headers: { Authorization: `Bearer ${authToken}` } }
-      //       );
-      //       const entries = response.data || [];
-      //       const totalSeconds = entries.reduce(
-      //         (sum, e) => sum + Math.round(Number(e.hours_spent) * 3600),
-      //         0
-      //       );
-      //       return { ...task, savedTime: totalSeconds };
-      //     } catch {
-      //       return { ...task, savedTime: 0 };
-      //     }
-      //   })
-      // );
-
-      allTasks = [...allTasks, ...baseTasks];
-
-      // check pagination
-      const meta = response.data.meta || {};
-      hasMore = meta.has_more || false;
-      page++;
+      setTasks(filtered);
+    } catch (err) {
+      setError("Failed to fetch tasks");
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
     }
+  };
 
-    const filteredTask = allTasks.filter((task) => (
-      task.status === "Pending" || task.status === "In-Progress"
-    ))
 
-    setTasks(filteredTask);
-    return 
-    // setTasks(allTasks);
-  } catch (error) {
-    console.error("Task fetch error", error);
-    setError(error.response?.data?.message || "Failed to fetch tasks");
-  } finally {
-    setLoading(false);
-    isFetchingRef.current = false;
-  }
-};
-
-useEffect(() => {
-  if(!authToken){
-    setTasks([]);
-    return;
-  }
-  fetchTasks();
-}, [authToken]);
-
-  // const fetchTasks = async ({
-  //   page = 1,
-  //   limit = 50,
-  //   status = "all",
-  //   assigned_to = "",
-  //   // dyvaw@mailinator.com
-  //   // movipoku@mailinator.com
-  // } = {}) => {
-  //   if (!authToken) return;
-  //   try {
-  //     setLoading(true);
-  //     setError("");
-
-  //     const params = new URLSearchParams({
-  //       page,
-  //       limit,
-  //       status,
-  //       ...(assigned_to && { assigned_to }),
-  //     });
-
-  //     const response = await axios.get(
-  //       `${API_URL}/api/tasks/my-tasks?${params}`,
-  //       {
-  
-  //         headers: {
-  //           Authorization: `Bearer ${authToken}`,
-  //         },
-  //       }
-  //     );
-
-  //     const baseTasks = response.data.data || [];
-
-  //     // load entries for each tasks
-  //     const tasksWithTime = await Promise.all(
-  //       baseTasks.map(async (task) => {
-  //         try {
-  //           const response = await axios.get(
-  //             `${API_URL}/api/tasks/${task.id}/time-entries`,
-  //             {
-  //               headers: { Authorization: `Bearer ${authToken}` },
-  //             }
-  //           );
-  //           const entries = response.data || [];
-
-  //           // sum total hours - convert to seconds
-  //           const totalSeconds = entries.reduce(
-  //             (sum, e) => sum + Math.round(Number(e.hours_spent) * 3600),
-  //             0
-  //           );
-  //           return { ...task, savedTime: totalSeconds };
-  //         } catch (error) {
-  //           return { ...task, savedTime: 0 };
-  //         }
-  //       })
-  //     );
-
-  //     setTasks(tasksWithTime);
-  //     setMeta(response.data.meta || []);
-  //   } catch (error) {
-  //     console.error("Task fetch error", error);
-  //     setError(error.response?.data?.message || "Failed to fetch tasks");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  useEffect(() => {
+    if (!authToken) {
+      setTasks([]);
+      return;
+    }
+    fetchTasks();
+  }, [authToken]);
 
   const fetchTaskById = async (taskId) => {
     if (!authToken || !taskId) return;
-    
+
     try {
       setLoading(true);
       setError("");
 
       const response = await axios.get(`${API_URL}/api/tasks/${taskId}`,
         {
-          headers: { Authorization: `Bearer ${authToken}`},
+          headers: { Authorization: `Bearer ${authToken}` },
         }
       );
       return response.data.data;
     } catch (error) {
       console.error("Task detail fetch error", error);
       setError(error.response?.data?.message || "Failed to fetch task details");
-    }finally{
+    } finally {
       setLoading(false);
-    } 
+    }
   }
 
   // log time for a task
@@ -222,7 +134,9 @@ useEffect(() => {
           }
         );
 
-        return response.data.data || [];
+        const entries = response.data.data || [];
+        // Filter entries for current user only
+        return entries.filter(e => e.employee_id === user?.id);
       } catch (error) {
         console.error("Fetch entries failed", error);
         return [];
